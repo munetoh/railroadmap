@@ -1,0 +1,7 @@
+
+For more information on railroadmap, see http://github.com/munetoh/railroadmap
+
+NOTE: Change this information in PostInstall.txt 
+You can also delete it if you don't want it.
+
+
