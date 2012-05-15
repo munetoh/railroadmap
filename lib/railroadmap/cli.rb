@@ -261,6 +261,13 @@ module Railroadmap
       end
 
       # Ruby code -> Abstracted expression
+      # check
+      raise "set $path2id in #{abstraction_file}" if $path2id == nil
+      raise "set $map_variable in #{abstraction_file}" if $map_variable == nil
+      raise "set $map_guard in #{abstraction_file}" if $map_guard == nil
+      raise "set $map_guard_by_block in #{abstraction_file}" if $map_guard_by_block == nil
+      raise "set $map_action in #{abstraction_file}" if $map_action == nil
+      # Set
       a.path2id = $path2id
       a.set_variable_abstmap($map_variable)
       a.set_guard_abstmap($map_guard)
@@ -286,19 +293,20 @@ module Railroadmap
       h.html('./railroadmap', nil)
 
       # PNG by Graphviz.  Heavy:-(
+      # ./railroadmap/railroadmap_bsd.png
+      # ./railroadmap/railroadmap_dfd.png
       if options[:graphviz] then
-        a.graphviz('./railroadmap')
+        a.graphviz('./railroadmap/railroadmap')
       end
       # DOY by Graphviz
       #if options[:graphvizdot] then
       #  s.outputGraphvizDot("./coverage")  
       #end
       
-      # B model
+      # B model (for ProB)
+      # probcli railroadmap/railroadmap.mch -c
+      # prob railroadmap/railroadmap.mch
       if options[:bmodel] then 
-        # B method
-        # probcli railroadmap/railroadmap.mch -c
-        # prob railroadmap/railroadmap.mch
         b = Abstraction::Output::Bmethod.new
         b.output('./railroadmap')
       end
