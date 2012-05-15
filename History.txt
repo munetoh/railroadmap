@@ -1,3 +1,9 @@
-=== 0.0.0 / 2011-05-03 (Seiji Munetoh)
+=== 0.1.0 / 2012-05-14 (Seiji Munetoh)
+* added abstraction features
+* state digram and dataflow diagram
+* added HTML5 output
+* added B method output
+* added PNG(graphviz) output
 
+=== 0.0.0 / 2011-05-03 (Seiji Munetoh)
 * Initial import

@@ -7,12 +7,19 @@ RailroapMap generates behavioral diagrams for Ruby on Rails applications.
 
 = Install
 
- gem install
+ gem install railroadmap
  
 = Uninstall
 
  gem uninstall railroadmap
 
+= Build
+
+ git clone git://github.com/munetoh/railroadmap.git
+ cd railroadmap
+ rake -T
+ rake gemspec  
+ gem build railroadmap.gemspec
 
 = LICENSE:
 

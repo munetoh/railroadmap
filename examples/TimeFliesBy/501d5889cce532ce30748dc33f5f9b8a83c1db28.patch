@@ -1,0 +1,19 @@
+diff --git a/app/controllers/users_controller.rb b/app/controllers/users_controller.rb
+index 56aef21..7e99385 100644
+--- a/app/controllers/users_controller.rb
++++ b/app/controllers/users_controller.rb
+@@ -25,7 +25,13 @@ class UsersController < ApplicationController
+       end
+ 
+       # Redirect to stored location for user in session or to the home page.
+-      redirect_to stored_location_for(:user) || root_url
++      # TODO RailroadMap does not support ||
++      # redirect_to stored_location_for(:user) || root_url
++      if stored_location_for(:user) != nil then
++        redirect_to stored_location_for(:user)
++      else
++        redirect_to root_url
++      end
+     else
+       render :new
+     end

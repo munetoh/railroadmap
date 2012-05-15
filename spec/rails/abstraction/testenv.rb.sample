@@ -1,0 +1,63 @@
+
+#
+# ~/Dropbox/workspace/Depot.txt
+# git clone https://github.com/mitchwd/depot.git
+# cd depot
+# brew install postgresql
+# bundle install
+# rake db:migrate
+# rake db:seed
+# rake script/load_orders.rb
+# rails s
+# rake routes > HERE/depot.routes
+$depot_basedirs=[
+  "/Users/foo/workspace/depot"
+]
+
+
+$timefliesby_basedirs=[
+  "/Users/foo/Dropbox/workspace/TimeFliesBy",
+  "/Users/foo/.rvm/gems/ruby-1.9.2-p290@timefliesby/gems/devise-1.4.2",
+]
+
+
+#
+# ~/Dropbox/workspace/spree.txt
+#
+$spree_basedirs=[
+  "/Users/foo/workspace/spree20120212",
+  "/Users/foo/.rvm/gems/ruby-1.9.2-p290/gems/spree_core-1.0.0",
+  "/Users/foo/.rvm/gems/ruby-1.9.2-p290/gems/spree_auth-1.0.0",
+  "/Users/foo/.rvm/gems/ruby-1.9.2-p290/gems/spree_api-1.0.0",
+  "/Users/foo/.rvm/gems/ruby-1.9.2-p290/gems/spree_dash-1.0.0",
+  "/Users/foo/.rvm/gems/ruby-1.9.2-p290/gems/spree_promo-1.0.0"
+]
+
+
+#
+# Sample code in Book 
+#
+# Agile Web Development with Rails (4th edition)
+#  brew install wget
+#  cd sandbox
+#  wget http://media.pragprog.com/titles/rails4/code/rails4-code.tgz
+#  
+# The RSpec Book
+#  wget http://media.pragprog.com/titles/achbd/code/achbd-code.tgz
+#  tar xvfz achbd-code.tgz
+#  mv code achbd-code
+#
+# The Cucumber Book
+#  wget http://media.pragprog.com/titles/hwcuc/code/hwcuc-code.tgz
+#  tar xvfz hwcuc-code.tgz
+#  mv code hwcuc-code
+#  
+#  hwcuc-code/rails/11/
+#  hwcuc-code/rails/iteration_7
+#
+# 
+# http://rails.vacco.net/
+#
+#  TOO OLD :-(
+#
+

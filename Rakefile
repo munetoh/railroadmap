@@ -11,12 +11,11 @@ require 'rake'
 
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
-  # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "railroadmap"
   gem.homepage = "http://github.com/munetoh/railroadmap"
   gem.license = "MIT"
-  gem.summary = %Q{Generate behavior model of Rails application.}
-  gem.description = %Q{Generate behavior model of Rails application. model is DOT file}
+  gem.summary = %Q{Generate behavior model of Ruby on Rails Web application.}
+  gem.description = %Q{TBD}
   gem.email = "seiji.munetoh@gmail.com"
   gem.authors = ["Seiji Munetoh"]
   # dependencies defined in Gemfile

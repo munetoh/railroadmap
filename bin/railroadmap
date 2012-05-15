@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+#
+#  Created on 2011-05-03.
+#  Copyright(C) Seiji Munetoh 2011. All rights reserved.
+
+require 'rubygems'
+require File.expand_path(File.dirname(__FILE__) + "/../lib/railroadmap")
+require "railroadmap/cli"
+
+Railroadmap::CLI.execute(STDOUT, ARGV)
