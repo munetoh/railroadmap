@@ -60,11 +60,7 @@ module Abstraction
     
     def add_variable(v)
       @variables << v
-      #v.print
-      #puts "SM DEBUG #{@id} add_variable #{@variables.size}"
     end
-    
-    
     
     def complete_condition(guard2abst, guard2abst_byblk)
       @block_root.complete_condition(nil, nil, guard2abst, guard2abst_byblk)

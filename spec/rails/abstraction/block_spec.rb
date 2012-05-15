@@ -9,6 +9,10 @@ require 'pp'
 # require 'tracer'
 # Tracer.on
 
+require 'logger'
+$log = Logger.new(STDOUT)
+$log.level = Logger::ERROR
+
 describe Abstraction::Block do
   
   
@@ -86,7 +90,9 @@ describe Abstraction::Block do
     guard2abst = Hash.new
     guard2abst['task.size > 0'] = 'task exist'
     guard2abst['sign_in == true'] = 'sign_in'
-    $block_root.complete_condition(nil, nil, guard2abst)
+    
+    guard2abst_byblk = Hash.new # TODO
+    $block_root.complete_condition(nil, nil, guard2abst, guard2abst_byblk)
   end
   
   #
@@ -138,7 +144,8 @@ describe Abstraction::Block do
   it ": complete condition" do
     guard2abst = Hash.new
     guard2abst['@user.update_attributes(params[:user]) == true'] = 'update == true'
-    $block2_root.complete_condition(nil, nil, guard2abst)
+    guard2abst_byblk = Hash.new # TODO
+    $block2_root.complete_condition(nil, nil, guard2abst,guard2abst_byblk)
   end
 
   #
@@ -163,7 +170,8 @@ describe Abstraction::Block do
 
   it ": complete condition" do
     guard2abst = Hash.new
-    $block3_root.complete_condition(nil, nil, guard2abst)
+    guard2abst_byblk = Hash.new # TODO
+    $block3_root.complete_condition(nil, nil, guard2abst,guard2abst_byblk)
   end
   
   it ": print BLOCK 3" do

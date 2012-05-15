@@ -8,9 +8,6 @@ require 'erb/stripper'
 # 
 require 'ripper'
 
-# http://rubyforge.org/projects/parsetree/
-#require 'ruby_parser' 
-#require 'ruby2ruby'
 require 'pp'
 
 # String#pluralize  <-> String#singularize
@@ -76,25 +73,18 @@ module Abstraction
           else
             @submit_path = path.strip
           end
-          
-          #puts "submit #{@submit_title} #{@submit_path}"
         end
         
         def add_linkto(title, path)
           @link_to_title = title.strip
           @link_to_path = path.strip
-          #puts "link to #{@link_to_title} #{@link_to_path}"
         end
         
         # Render
         # load ?
         def add_render(form)
-          #i#f form == nil then
-          #  puts "TODO form is nil"
-          #else
           @has_render = true
           @render = form.strip
-          #puts "render #{@render}"
         end
         
         def add_contents(buf)
@@ -119,10 +109,8 @@ module Abstraction
         # create child 
         #
         def new_child(type, cond)
-          #puts "new child"
           blk = Block.new(@id, type)
           blk.parent = self
-          #blk.type = type
           blk.add_condition(cond)
           @children.push(blk)
           return blk
@@ -133,8 +121,6 @@ module Abstraction
           if @type == 'do'
             if @condition =~ /([@.\w]+).each \|(\w+)\|/ then
               @do_variable = $1
-              # TODO add $2 as variable for this block, data flow? 
-              # puts "#{$1} #{$2}"
               return "#{@do_variable}.size  > 0"
             end
           end
@@ -188,7 +174,6 @@ module Abstraction
         # PRE process (initialize)
         def init(id)
           blk = Block.new(id, 'root')
-          #blk.type = 'root'
           @root_blk = blk
           @blk = blk
         end
@@ -209,19 +194,14 @@ module Abstraction
           if level == 0 then
             blk = @root_blk
             puts "ERB Blocks"
-            #puts "level type guard contents"
             puts "-----------------------------------"
-            #puts "#{level.to_s.rjust(3)} #{blk.type.ljust(5)} - #{strip(blk.contents)}"
             blk.print
-            #puts " -> #{blk.children.size} children"
             blk.children.each do |b2|
               self.print(level + 1, b2)
             end
           else
-            #puts "#{level.to_s.rjust(3)} #{blk.type.ljust(5)} <#{blk.condition2}>  <#{strip(blk.contents2)}>"
             puts "-----------------------------------"
             blk.print
-            #puts " -> #{blk.children.size} children"
             blk.children.each do |b2|
               self.print(level + 1, b2)
             end
@@ -293,15 +273,6 @@ module Abstraction
       #
       def parse_sexp(level, sexp) 
         
-        # Class
-        #if (sexp[0].class == Symbol) && (sexp[0].to_s == 'class') then      
-        #  return add_class(level, sexp, 'controller')
-        #end
-        # Def (= Action)    
-        #if (sexp[0].class == Symbol) && (sexp[0].to_s == 'def') then
-        #  return add_def(level, sexp, 'action')
-        #end        
-        
         # TODO redirect_to
         # TODO render        
         if (sexp[0].class == Symbol) && (sexp[0].to_s == 'command') then
@@ -362,9 +333,7 @@ module Abstraction
                 
         # TODO SUBMIT
         if (sexp[0].class == Symbol) and (sexp[0].to_s == 'method_add_block') then
-          debug "SM DEBUG method_add_block - start"
           parse_sexp_common(level, sexp)
-          debug "SM DEBUG method_add_block - end"
           return
         end
 
@@ -426,15 +395,9 @@ module Abstraction
         parse_sexp(0, s)
         
         # DEBUG
-        debug "SM DEBUG GUARD #{$state.filename}"        
+        debug "GUARD #{$state.filename}"
         pp $conditions if $debug 
         
-        #@state = Abstraction::State.new(n, 'view')
-        #@state.filename << @filename
-        ##puts "#{$abst_states.class}"
-        #raise "$abst_states is not defined" if $abst_states == nil
-        #raise "model #{n} already exist" if $abst_states[@state.id] != nil
-        #$abst_states[@state.id] = @state
       end
       
       
@@ -447,25 +410,8 @@ module Abstraction
         e2a.parse('')
         e2a.finish
         
-        # TODO condition table  
-        
-        #puts ""
-        #puts "Filename : #{@filename}"
-        #puts "Model    : #{@model}"
-        #puts "Action   : #{@action}"
-        
         e2a.print(0, nil)   
       end
-      
-      
-    
-      #def ruby
-      #  @ruby
-      #end  
-      #def ast
-      #  @ast
-      #end
-    
     end
-  end    
+  end
 end

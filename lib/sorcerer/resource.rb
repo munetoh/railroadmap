@@ -23,9 +23,6 @@ module Sorcerer
       return unless sexp
       
       if sexp.first.class == Array then
-        #puts "sexp.first #{sexp.first.class} - #{sexp.first}}" # SM DEBUG        
-        #resource(sexp[0])
-        
         sexp.each do |s|
           resource(s)
           emit(", ")  # TODO put between res
@@ -38,16 +35,12 @@ module Sorcerer
       # 2012-03-11
       if sexp.first == nil then
         #puts "sexp.first == nil"
-        #p sexp
-        #puts "TODO "
         #raise "nil sexp"
         return
       end
       
       handler = HANDLERS[sexp.first]
-      #p handler
-      #p sexp # SM DEBUG
-      #puts "sexp.first #{sexp.first.class} #{sexp.first} " # SM DEBUG
+      #puts "sexp.first #{sexp.first.class} #{sexp.first} "
       #raise NoHandlerError.new(sexp.first) unless handler
       if @debug
         puts "----------------------------------------------------------"

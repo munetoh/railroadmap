@@ -8,9 +8,6 @@ require 'erb/stripper'
 # 
 require 'ripper'
 
-# http://rubyforge.org/projects/parsetree/
-#require 'ruby_parser' 
-#require 'ruby2ruby'
 require 'pp'
 
 # String#pluralize  <-> String#singularize
@@ -35,14 +32,8 @@ module Abstraction
         @modelname = ActiveSupport::Inflector.singularize(arg)
         
         # new Model state
-        #n = 'M_' + @modelname
+        # n = 'M_' + @modelname
         @state = add_state('model', @modelname, @filename)
-        #@state = Abstraction::State.new(@modelname, 'model')
-        #@state.filename << @filename
-        ##puts "#{$abst_states.class}"
-        #raise "$abst_states is not defined" if $abst_states == nil
-        #raise "model #{n} already exist" if $abst_states[@state.id] != nil
-        #$abst_states[@state.id] = @state       
       end
       
       def add_attribute(type, name)
@@ -54,13 +45,6 @@ module Abstraction
         # link state<->variable
         v.state = @state
         @state.add_variable v
-        #s = Abstraction::Variable.new(n, 'model', type)
-        #s.filename << @filename
-        #s.state = @state
-        ##puts "#{$abst_states.class}"
-        #raise "$abst_variables is not defined" if $abst_variables == nil
-        #raise "model #{n} already exist" if $abst_variables[s.id] != nil
-        #$abst_variables[s.id] = s                  
       end
       
       #def debug(msg)
@@ -114,14 +98,8 @@ module Abstraction
         parse_sexp(0, s)
         
         
-        # TODO devise
-        #if $use_devise == true then
-          #raise ""
-          #add_variable('model', 'user#reset_password_token', 'TBD', 'HELPER')
-          add_variable('model', 'user#password', 'TBD', 'HELPER')
-          add_variable('model', 'user#password_confirmation', 'TBD', 'HELPER')
-        #end
-        #raise ""
+        add_variable('model', 'user#password', 'TBD', 'HELPER')
+        add_variable('model', 'user#password_confirmation', 'TBD', 'HELPER')
       end
     end
     
@@ -196,20 +174,13 @@ module Abstraction
               raise "TODO unknown array  #{a2}"
             end
             
-            #p a2
-            #p a2[1][1]
-            #p a2[][]
-            
           else
             debug "TODO [2][1] [#{index}] [0] is #{a[1][1][0]} <==============================="
             p array
             debug "TODO unknown array"
           end
-          # arg << a[1][1][1]            
           index += 1
         end
-        # arg = sexp[2][1][0][1][1][1]
-        # debug "#{@indent.rjust(level)} #{level} command #{cmd} #{arg} =============="        
         debug "#{@indent.rjust(level)}command #{cmd} #{arg}"
         parse_sexp_common(level, sexp)
       end
@@ -225,7 +196,6 @@ module Abstraction
         # attr_accessible list -> Model
         # has_many -> link to model
         if (sexp[0].class == Symbol) && (sexp[0].to_s == 'command') then
-          # puts "SM DEBUG #{sexp}"
           return add_command(level, sexp, 'model')
         end
            
@@ -273,8 +243,6 @@ module Abstraction
           # look up the variable of this model
           # set flag attr_accessible = false
           list = get_ruby($attr_accessible).gsub(':','').gsub(' ','').split(',')
-          #puts "SM DEBUG $attr_accessible #{list}"
-          #$state.print
           vs = $state.variables 
           vs.each do |v|
             #v.print
@@ -284,7 +252,6 @@ module Abstraction
             list.each do |n|
               if n != '' then
                 if n == d[1] then
-                  #puts "HIT"
                   v.attr_accessible = true
                 end
               end
@@ -292,7 +259,6 @@ module Abstraction
             
           end
         end
-        
       end
     end
   end

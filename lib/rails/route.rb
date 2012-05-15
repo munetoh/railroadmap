@@ -35,32 +35,6 @@ class Route
     end
 
     route2map(routes)
-
-    #ac = [["",""]]
-    #routes.each do |r|
-    #  if r[:name] == nil then
-    #    # TODO no name, 
-    #    #puts "name=nil routes exist"
-    #  elsif r[:name] == "root" then
-    #    # verb is nil
-    #    a = r[:reqs].scan(/:action=>"(\w*)"/)
-    #    c = r[:reqs].scan(/:controller=>"(\w*)"/)
-    #    s = @fsm.addControllerSubvertex(r[:name], "TBD", r[:path], c[0][0], a[0][0], "routes", nil)
-    #    #s.path = "root"
-    #    s.routed = true
-    #  elsif r[:verb] == nil then
-    #    # SKIP 
-    #    myDebug("route #{r} - SKIP")
-    #  else
-    #    a = r[:reqs].scan(/:action=>"(\w*)"/)
-    #    c = r[:reqs].scan(/:controller=>"(.*)"/)   # hoge/hoge
-    #    #puts c
-    #    s = @fsm.addControllerSubvertex(r[:name], r[:verb], r[:path], c[0][0], a[0][0], "routes", nil)
-    #    s.routed = true
-    #  end
-    #end
-
-    route2map(routes)
   end
 
   #
@@ -115,8 +89,6 @@ class Route
         map[r[:name]] = [c[0][0], a[0][0], r[:verb],r[:path]]
       end
     end
-    
-    # puts "SM DEBUG 3.1 done"
     map
   end
 end

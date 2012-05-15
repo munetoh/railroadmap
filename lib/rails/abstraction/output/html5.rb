@@ -542,45 +542,32 @@ module Abstraction
             domain = s.domain.split('#')
             case s.type
             when 'controller'            
-              #if s.is_private or s.is_protected then
-                # SKIP
-                #puts "SKIP protected"
-              #else
-                # Place
-                #puts "JS"
-                bgcolor = 'grey' if s.is_private # Green
-                bgcolor = 'grey' if s.is_protected # Green
-                
-                bgcolor = 'green' if s.is_authenticated # Green
-                bgcolor = 'green' if s.ssl_required
-                id = escape(s.id)
-                
-                if s.is_CC_dst then x2 = x + 200
-                else                x2 = x
-                end
-                
-                cy = set_y_location(s.domain, cy)
-                #y = y + dy
-                
-                #label = s.type + '\n' + s.domain
-                label = s.domain
-                width = label.size * 4.5 + 40
-                states << "var #{id} = uml.State.create({"
-                states << "rect: {x: #{x2}, y: #{cy}, width: #{width}, height: 50},"
-                states << "label: \"#{label}\","
-                states << "attrs: {fill: \"90-#000-#{bgcolor}:1-#fff\"},"
-                states << "shadow: true,"
-                states << "}).toggleGhosting();"
-                states << "\n"
-                #states << "console.log(\"SM DEBUG #{x} #{y}\");\n"
-                
-                              
-                all << id
-              #end
-            #when 'view'
-            #  puts "SKIP #{s.type}"
-            #else
-            #  puts "SKIP #{s.type}"
+              bgcolor = 'grey' if s.is_private # Green
+              bgcolor = 'grey' if s.is_protected # Green
+              
+              bgcolor = 'green' if s.is_authenticated # Green
+              bgcolor = 'green' if s.ssl_required
+              id = escape(s.id)
+              
+              if s.is_CC_dst then x2 = x + 200
+              else                x2 = x
+              end
+              
+              cy = set_y_location(s.domain, cy)
+              #y = y + dy
+              
+              #label = s.type + '\n' + s.domain
+              label = s.domain
+              width = label.size * 4.5 + 40
+              states << "var #{id} = uml.State.create({"
+              states << "rect: {x: #{x2}, y: #{cy}, width: #{width}, height: 50},"
+              states << "label: \"#{label}\","
+              states << "attrs: {fill: \"90-#000-#{bgcolor}:1-#fff\"},"
+              states << "shadow: true,"
+              states << "}).toggleGhosting();"
+              states << "\n"
+
+              all << id
             end
           end
           
@@ -657,9 +644,7 @@ module Abstraction
                 states << "\n"
                 all << id
               end
-              
-              
-              #states << "console.log(\"SM DEBUG #{x} #{y}\");\n"
+
               vy = vy + 75
             end
           end
@@ -700,15 +685,11 @@ module Abstraction
                   states << "var #{tid} = #{src_id}.joint(#{dst_id}, uml.arrow).register(all);\n"
                 when 'view_controller'
                   src_id = src_id + '_inbound'
-                  #dst_id = dst.id
                   states << "var #{tid} = #{src_id}.joint(#{dst_id}, uml.arrow).register(all);\n"
                 when 'controller_view'
-                  #src_id = src.id
                   dst_id = dst_id + '_outbound'
                   states << "var #{tid} = #{src_id}.joint(#{dst_id}, uml.arrow).register(all);\n"
                 when 'controller_controller'
-                  #src_id = src.id
-                  #dst_id = dst.id
                   states << "var #{tid} = #{src_id}.joint(#{dst_id}, uml.arrow).register(all);\n"
                 else
                   error "html5_jointjs_bsd, unknown SRC/DST pair, #{tt}"
@@ -717,8 +698,6 @@ module Abstraction
                 # Transtion name
                 # link_to(text)
                 if (t.type == 'link_to') and (t.title != nil) and (t.title.class == String)
-                  #puts "SM DEBUG link_to title  #{t.title} #{t.title.class}"
-                  #title = 'TBD'
                   type = t.type + '(' + t.title + ')'
                 elsif  (t.type == 'submit')
                   # TODO list
@@ -785,10 +764,7 @@ module Abstraction
           f.write "var uml = Joint.dia.uml;"
           f.write "var paper = Joint.paper(\"world\", #{width}, #{height});"
           f.write "\n"
-          #f.write "console.log(\"SM DEBUG\");\n"
           f.write states
-         
-          #p all
         }
   
   
@@ -921,7 +897,6 @@ EOF
               states << "shadow: true,"
               states << "}).toggleGhosting();"
               states << "\n"
-              #states << "console.log(\"SM DEBUG #{x} #{y}\");\n"
               all << id
             end  
           end
@@ -931,7 +906,7 @@ EOF
           $abst_variables.each do |n,v|
             skip = true
             bgcolor = 'red'
-            #domain = v.domain.split('#')
+            
             case v.type
             when 'model'            
               if v.attr_accessible then
@@ -950,7 +925,6 @@ EOF
               cy = set_y_location(v.domain, cy)
               id = escape(v.id)
               
-              #label = s.type + '\n' + s.domain
               label = v.domain
               width = label.size * 4.5 + 40
               states << "var #{id} = uml.State.create({"
@@ -960,7 +934,6 @@ EOF
               states << "shadow: true,"
               states << "}).toggleGhosting();"
               states << "\n"
-              #states << "console.log(\"SM DEBUG #{x} #{y}\");\n"
               all << id
             end  
           end
@@ -1041,7 +1014,6 @@ EOF
                 states << "shadow: true,"
                 states << "}).toggleGhosting();"
                 states << "\n"
-                #states << "console.log(\"SM DEBUG #{x} #{y}\");\n"
                 all << id  
               end
               
@@ -1072,7 +1044,6 @@ EOF
           f.write "var uml = Joint.dia.uml;\n"
           f.write "var paper = Joint.paper(\"world\", #{width}, #{height});\n"
           f.write "\n"
-          #f.write "console.log(\"SM DEBUG\");\n"
           f.write states
           f.write joints
         }  # open

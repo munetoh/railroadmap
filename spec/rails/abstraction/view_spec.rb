@@ -9,6 +9,11 @@ require 'pp'
  require 'tracer'
 # Tracer.on
 
+require 'logger'
+$log = Logger.new(STDOUT)
+$log.level = Logger::ERROR
+
+
 describe Abstraction::Parser::View do
   
   # Setup

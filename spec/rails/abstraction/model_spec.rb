@@ -33,12 +33,6 @@ describe Abstraction::Parser::Model do
     m3 = Abstraction::Parser::Model.new
     m3.load('M_tag_task', './spec/rails/abstraction/sample/app/models/tag_task.rb')
     
-    #m4 = Abstraction::Parser::Model.new
-    #m4.load('M_task', '/Users/sage/workspace/TimeFliesBy-rails3.0/app/models/task.rb')    
-    
-    #$abst_states.each do |n,v|
-    #   v.print
-    #end
     if $verbose > 0 then
       $abst_states.each do |n,s|
          p n
@@ -62,7 +56,5 @@ describe Abstraction::Parser::Model do
     $abst_variables['S_user#remember_me'].should_not nil
     $abst_variables['S_user#current_password'].should_not nil
     
-    
-       
   end
 end

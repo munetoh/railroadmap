@@ -151,7 +151,10 @@ module Abstraction
                 t.variables.each do |v|
                   arg <<  v + ', '
                   # TODO check $map_bset_types 
-                  pre1 << v + ':' + $map_bset_types[v] + ' & '
+                  v2 = $map_bset_types[v]
+                  v2 = 'ruby(' +v + ')' if v2 == nil
+                  
+                  pre1 << v + ':' + v2 + ' & '
                 end
                 arg << 'u, dst'  # TODO
                 #p arg

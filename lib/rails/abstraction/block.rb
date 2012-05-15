@@ -51,7 +51,7 @@ module Abstraction
     
     
     def add_child(type, cond, exit)
-      debug "SM DEBUG GUARD add_child #{type} "
+      debug "GUARD add_child #{type} "
       b = Block.new
       b.cond = cond
       b.exit = exit
@@ -71,7 +71,7 @@ module Abstraction
     end
     
     def add(type, cond, exit)
-      debug "SM DEBUG GUARD add_child #{type} "
+      debug "GUARD add_child #{type} "
       b = Block.new
       b.cond = cond
       b.exit = exit
@@ -108,7 +108,6 @@ module Abstraction
     # hint is text  - TODO or AST?
     def add_dataflow(src_id)
       d = Abstraction::Dataflow.new('control', src_id, nil, @id, nil, nil)
-      #d.filename << @filename
       
       if $abst_dataflows[d.id] != nil then
         d.inc          

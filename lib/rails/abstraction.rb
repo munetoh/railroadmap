@@ -20,19 +20,8 @@ require 'sorcerer'
 require "graphviz"
 
 module Abstraction
-
   #############################################################################
-  #
-  #  Routes
-  #  route(URL,path)  ---> controller -----> view
-  #
-  class Routes
-    # path -> controller
-  end  
-
-  
-  #############################################################################
-  # Model-View-Controller
+  # Model-View-Controller class
   #
   class MVC
     #
@@ -73,10 +62,6 @@ module Abstraction
       # Guard, Action to Abst
       @guard2abst = nil
       @action2abst = nil
-            
-      # TODO routes
-      # TODO trans
-      # TODO variables      
     end
     attr_accessor :path2id, :guard2abst, :action2abst
 
@@ -149,8 +134,6 @@ module Abstraction
           d2 = File.dirname(fn)
           model = File.basename(d2)
           model2 = File.basename(fn, ".rb")
-          #puts "    #{model}/#{model2}"
-                  
           count += 1
         }
         
@@ -246,14 +229,12 @@ module Abstraction
         # Dir => model
         # ERB => action
         # _form => form  TODO
-        
         Dir.entries(dir).map do |f|
           path = File.expand_path(f, dir)
           #puts "   model #{f}"
           
           # singularize for model
           model = ActiveSupport::Inflector.singularize(f)
-          #puts "  #{f} => #{model}"
           
           if f == "." then
           elsif f == ".." then
@@ -279,7 +260,6 @@ module Abstraction
               debug "load : #{fn}"
               
               if fn =~ /\/(\w+)\/(\w+)\/(\w+).(\w+).erb/ then
-                #puts "#{$1} #{$2} #{$3} #{$4}"
                 m1 = $1
                 m2 = ActiveSupport::Inflector.singularize($2) 
                 a  = $3
@@ -314,7 +294,6 @@ module Abstraction
     end
     
     # complete_transition T_C_task#create#1 render title=, path=
-    # render            C_task#create[1]                  -> [:action => "new",             ] if (not @task.save)  ["/Users/sage/workspace/TimeFliesBy-rails3.0/app/controllers/tasks_controller.rb"]
     # [:args_add_block,
     #  [[:bare_assoc_hash,
     #    [[:assoc_new,
@@ -356,7 +335,6 @@ module Abstraction
         a.each do |an|
           k = an[1][1][1][1]
           v = an[2][1][1][1]
-          #puts "KV #{k} = #{v}"
           hash[k] = v
         end
       end
@@ -422,7 +400,7 @@ module Abstraction
         
         # Check fix list
         src_label = trans.src_id + '[' + trans.count.to_s + ']'
-        fix = $map_fix_transitions[src_label]
+        fix = $map_fix_transitions[src_label] if $map_fix_transitions != nil
         if fix != nil then
           if fix[0] then
             puts "Fix transitions #{src_label}"
@@ -453,14 +431,12 @@ module Abstraction
             elsif sexp[1][1][1][0].to_s == '@ivar' then
               # link_to("Destroy", @task, :confirm => "Are you sure?", :method => :delete)
               # TODO confirm => condition,  with confirm("Are you sure?")
-              #puts "SM DEBUG @ivar"
               # check assoc_hash
               hash = get_assoc_hash(sexp[1][2])
               if hash == nil
                 path = sexp[1][1][1][1]
               elsif hash['method'] == 'delete'
                 # should  trans to destroy
-                #puts "SM DEBUG delete => "
                 path = sexp[1][1][1][1]
                 destroy = true
               else
@@ -470,19 +446,14 @@ module Abstraction
               end      
             elsif sexp[1][1][1][0].to_s == 'fcall' then
               path = sexp[1][1][1][1][1]
-              #puts "SM DEBUG fcall"
-              #pp sexp[1][2]
               hash = get_assoc_hash(sexp[1][2])
               if hash == nil
-                #path = sexp[1][1][1][1]
+                # path = sexp[1][1][1][1]
               elsif hash['method'] == 'delete'
                 # should  trans to destroy
-                #puts "SM DEBUG delete => "
-                #path = sexp[1][1][1][1]
                 destroy = true
               else
                 debug "complete_transition, fcall unknown method?"
-                #p hash
                 raise "complete_transition, fcall unknown method?"  if $robust
               end
             elsif sexp[1][1][1][1][0].to_s == '@ident' then
@@ -490,13 +461,11 @@ module Abstraction
               path = sexp[1][1][1][1][1]
             else
               debug "complete_transition - missing path"
-              #p sexp[1][1][1]     
             end
             
             # lookup
             id = @path2id[path]
             if id == nil then
-              # puts "---SM DEBUG title=(#{title}) path=(#{path}) => #{id}" 
               debug "complete_transition #{trans.id} #{trans.type} title=#{title}, path=#{path} is missing"
               debug "sexp[1][1][1][0] #{sexp[1][1][1][0]}"
               if $debug then
@@ -508,7 +477,7 @@ module Abstraction
               domain = id.split('#')
               id = domain[0] + '#destroy'
             end
-            #raise "Unknown path #{path}" if id == nil
+            # raise "Unknown path #{path}" if id == nil
             trans.dst_id = id
             trans.title = title
           
@@ -519,7 +488,6 @@ module Abstraction
               action = get_assoc(sexp, 'action')
               if action != nil then              
                 id = 'V_' + dom[0] + '#_' + action
-                #puts "SM DEBUG #{id}"
               end
             end
             # TODO controller
@@ -528,7 +496,6 @@ module Abstraction
               action = get_assoc(sexp, 'action')
               if action != nil then              
                 id = 'V_' + dom[0] + '#' + action
-                #puts "SM DEBUG #{id}"
               end
             end
                         
@@ -554,18 +521,14 @@ module Abstraction
             
             # new_registration_path(resource_name, ), 
             if sexp[1][0][0].to_s == 'method_add_arg' then
-              #puts "SM DEBUG method_add_arg"
-              #p sexp[1][0][1][1][0]
               if sexp[1][0][1][1][0].to_s == '@ident' then
                 
                 path = sexp[1][0][1][1][1]
                 id = @path2id[path]
-                #puts "SM DEBUG @ident  #{path} #{id}"
               end
             end            
             
             if id == nil then
-              # puts "---SM DEBUG title=(#{title}) path=(#{path}) => #{id}" 
               debug "complete_transition - id was nil, #{trans.id} #{trans.type} title=#{title}, path=#{path}"
             end
             #raise "Unknown path #{path}" if id == nil
@@ -593,7 +556,6 @@ module Abstraction
         if trans.src_id == trans.dst_id then
           # Bad transition => invalid
           $log.info "LOOP #{trans.type} #{trans.src_id}"
-          #pp trans.dst_hint
           trans.invalid = true
         end
       end  # do
@@ -781,9 +743,5 @@ module Abstraction
       
       g.output( :png => filename)
     end
-
-
- 
-             
   end  # class MVC
 end

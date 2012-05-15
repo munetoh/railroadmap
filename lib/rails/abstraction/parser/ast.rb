@@ -107,19 +107,15 @@ module Abstraction
         s.base_controller_class = @base_controller_class
         
         dm = domain.split('#')
-        #puts "SM DEBUG @ssl_required #{@ssl_required.class}"
         if @ssl_required.class == Hash then
-          #puts "#{dm[1]}"
           if @ssl_required[dm[1]] == true then
             s.ssl_required = true
           end
         else
           s.ssl_required = @ssl_required
         end
-        
-        #puts "SM DEBUG @ssl_allowed #{@ssl_allowed.class}"
+
         if @ssl_allowed.class == Hash then
-          #puts "#{dm[1]}"
           if @ssl_allowed[dm[1]] == true then
             s.ssl_allowed = true
           end
@@ -128,8 +124,7 @@ module Abstraction
         end
         
         # Before filter with Authentication check => set flag at the state        
-        #s.is_authenticated = @is_authenticated
-        debug "SM DEBUG @is_authenticated #{@is_authenticated.class}"
+        # s.is_authenticated = @is_authenticated
         if @is_authenticated.class == Hash then
           # White list
           debug "#{dm[1]}"
@@ -162,7 +157,6 @@ module Abstraction
         raise "$abst_variables is not defined" if $abst_variables == nil
         raise "#{type} #{domain} already exist" if $abst_variables[v.id] != nil
         $abst_variables[v.id] = v
-        # NG debug "add_variable #{$variable}"
         v
       end
       
@@ -189,8 +183,6 @@ module Abstraction
       # text => variable id
       def lookup_variable(domain, name)
         dm =  domain.split('#')
-        #puts "SM DEBUG UNKNOWN #{domain} #{name}"
-        #p dm
         
         if dm[0] =~ /devise/ then
           dm[0] = 'user'
@@ -217,13 +209,11 @@ module Abstraction
           src_id = lookup_variable($state.domain, src_hint)
           src_block = 'variable'
           dst_block = $block.id
-          debug "SM DEBUG lookup the variable #{src_hint}? at #{$state.id} => #{src_id}"            
         end
         if dst_id == nil and dst_hint != nil then
           dst_id = lookup_variable($state.domain, dst_hint)
           src_block = $block.id
           dst_block = 'variable'
-          debug "SM DEBUG lookup the variable #{dst_hint}? at #{$state.id} => #{dst_id}"  
         end
         
         d = Abstraction::Dataflow.new(type, src_id, src_hint, dst_id, dst_hint, nil)
@@ -272,12 +262,7 @@ module Abstraction
       def get_assoc_hash(assoc,sexp)
         h = Hash.new
         if sexp[0].to_s == 'assoc_new' then
-          debug "SM DEBUG HIT assoc_new"
-          #pp sexp
-          #pp sexp[1][1][1][1]
           if sexp[1][1][1][1] == assoc then
-            debug "SM DEBUG HIT assoc"
-            #pp sexp[2][1]
             a = sexp[2][1]
             a.each do |aa|
               n = aa[1][1][1]
@@ -293,11 +278,9 @@ module Abstraction
       def add_class(level, sexp, type)
         #  Simple class name   sexp[1][1][1]
         #  Hoge::Hoge  
-        #p sexp[1]
+
         name = get_ruby(sexp[1])
-        #p name
-        #name = sexp[1][1][1]
-        
+
         @class_name = name.downcase
         if type == 'model' then
           p    = sexp[2][1][1][1]  # ActiveRecode::Base
@@ -306,23 +289,15 @@ module Abstraction
           end
         end
         
-        
         # Cntroller
         if type == 'controller' then
-          #puts "SM DEBUG add_class controller"
           n1 = get_ruby(sexp[1])
           n2 = get_ruby(sexp[2])
-          #pp n1
-          #pp n2
-          
-          #p    = sexp[2][1][1][1] # ActionController::Base
           
           if n2 == 'ActionController::Base' then
             # Root 
-            #puts "SM DEBUG ApplicationController"           
           elsif n2 == 'ApplicationController' then            
             # TODO
-            #puts "SM DEBUG  TODO add ApplicationController def"
             # set default actions
             # TODO look up the def in the parent class
             # TODO h = get_action_list(classname) 
@@ -378,17 +353,6 @@ module Abstraction
           # TODO           
           domain = @modelname + '#' + @def_name
           add_state('controller', domain, @filename)
-          
-          #s = Abstraction::State.new(n, 'controller')
-          #s.filename << @filename
-          ##puts "#{$abst_states.class}"
-          #raise "$abst_states is not defined" if $abst_states == nil
-          #raise "controller #{n} already exist" if $abst_states[s.id] != nil
-          #$abst_states[s.id] = s
-          
-          #puts "SM DEBUG GUARD #{$state.filename}"
-          #pp $conditions
-
         end
         
         parse_sexp_common(level, sexp)
@@ -403,14 +367,8 @@ module Abstraction
               debug "missing dst_id #{dst_id}, from #{$state.id}"
               raise "missing dst_id #{dst_id}, from #{$state.id}" if $robust
             else
-              debug "SM DEBUG no trtans in def, set default trans C->V,  #{$state.id} -> #{dst_id}"              
               $transition = add_transition('render_def1', $state.id, dst_id, nil, $guard, @filename)
             end
-          #$has_transition = true
-          #$has_transition = false
-          #end
-          debug "SM DEBUG GUARD PRINT ALL #{$state.filename}"
-          #$state.print_block
         end
         
         # controller 
@@ -429,16 +387,11 @@ module Abstraction
       # Add Block
       def add_block(level, sexp, type)
         
-        
-        #args = sexp[1]
         if type == 'if' then
           pblock = $block
           $block = $block.add_child('if', sexp[1], nil)
           
-          #$condition_level += 1
-          #$conditions[$condition_level] << ['if', sexp[1]]
           $guard = get_ruby(sexp[1])
-          debug "SM DEBUG GUARD #{$condition_level} if #{$guard}   #{$state.filename}"
                              
           dsl "#{@indent.rjust(level)}#{type} #{$guard}"
           parse_sexp_common(level, sexp)        
@@ -447,38 +400,28 @@ module Abstraction
         elsif type == 'if_mod' then
           pblock = $block
           $block = $block.add_child('if_mod', sexp[1], nil)
-          #$condition_level += 1
-          #$conditions[$condition_level] << ['if_mod', sexp[1]]
           $guard = get_ruby(sexp[1])
           
-          debug "SM DEBUG GUARD #{$condition_level} if_mod #{$guard}   #{$state.filename}"
           dsl "#{@indent.rjust(level)}#{type} #{$guard}"
           parse_sexp_common(level, sexp)        
           dsl "#{@indent.rjust(level)}end  # #{type}" 
           $block = pblock
         elsif type == 'elsif' then
           $block = $block.add('elsif', sexp[1], nil)
-          #$conditions[$condition_level] << ['elsif', sexp[1]]
           $guard = get_ruby(sexp[1])
-          debug "SM DEBUG GUARD #{$condition_level} elsif #{$guard}   #{$state.filename}"
           dsl "#{@indent.rjust(level)}#{type} #{$guard}"
           parse_sexp_common(level, sexp)        
           dsl "#{@indent.rjust(level)}end  # #{type}" 
         elsif type == 'else' then
           $block = $block.add('else', nil, nil)
           dsl "#{@indent.rjust(level-1)}#{type}"
-          #puts "SM DEBUG else #{$guard}"
-          # TODO array or tree
-          #$conditions[$condition_level] << 'else'
           if $guard == nil then
             $guard = 'not UNKNOWN'
           else 
             $guard = 'not ' + $guard
           end
-          debug "SM DEBUG GUARD #{$condition_level} else #{$guard}   #{$state.filename}"
           parse_sexp_common(level, sexp)
         else
-          #error "ERROR add_block UNKNOWN #{type} #{$guard}"
           raise "ERROR add_block UNKNOWN #{type} #{$guard}"
         end
       end
@@ -496,12 +439,9 @@ module Abstraction
       
       # {respond.to }
       def add_method_add_arg(level, sexp, type)
-        debug "SM DEBUG call method_add_arg"
         name = sexp[1][1][1]
         sarg = sexp[2][1]
-        #p name
-        #p sarg
-        
+
         command(level, sexp, type, name, sarg)        
         parse_sexp_common(level, sexp)        
       end
@@ -524,7 +464,6 @@ module Abstraction
           
           if arg =~/:xml/ then
             # TODO RANBO!
-            debug "SM DEBUG XML -> ignore"
             $xml_transition = true
           else
             debug_ast "#{@indent.rjust(level)} #{level} command #{name} #{type} RENDER #{sarg} =============="
@@ -533,23 +472,12 @@ module Abstraction
             # Add to the transition list
             raise "$state is not defined" if $state == nil
             $transition = add_transition('render', $state.id, nil, sarg, $guard, @filename)
-            #t = Abstraction::Transition.new('render', $state.id, nil, arg)
-            #t.filename << @filename
-            #raise "$abst_transitions is not defined" if $abst_transitions == nil
-            #raise "#{type} #{domain} already exist" if $abst_variables[t.id] != nil
-            #$abst_transitions[t.id] = t
           end
           
         # ActionView::Helpers::UrlHelper
         when 'link_to'
           arg = get_ruby(sarg)
-          #arg3 = get_ruby(sexp)
-          #puts "Link_to #{sexp} - #{arg}"
-          #$debug = true
-          #parse_sexp_common(level, sexp)
-          #$debug = false
-          #puts "<<"
-          
+
           debug_ast "#{@indent.rjust(level)} #{level} command #{name} #{type} LINK #{sarg} =============="
           dsl "#{@indent.rjust(level)}command (link to #{arg})"
 
@@ -582,26 +510,18 @@ module Abstraction
           arg = get_ruby(sexp[2])
           #h = get_hash(sarg)
           debug "ast.rb command, TODO before_filter #{arg}"
-          #pp sarg
-          
-          # TODO
+
           #
           # Devise
           #   lib/devise/controllers/helpers.rb
           if arg =~ /(:authenticate_user!)/ then
             $authentication_method = 'devise'      
             if arg =~ /(only)/ then
-              #debug "SM DEBUG only => "
-              # TODO
               a = sarg[1][1][1][0]
-              #pp a
               @is_authenticated = get_assoc_hash('only',a)
-              #pp @is_authenticated
             else
               @is_authenticated = true
             end
-                        
-          #  add_transition('before_filter', $state.id, nil, $1, nil, @filename)
           end
         
         # ActionController::Filters::ClassMethods
@@ -612,27 +532,20 @@ module Abstraction
             $authentication_method = 'devise'
             @is_authenticated = true  
             if arg =~ /(only)/ then
-              #debug "SM DEBUG only => "
-              # TODO
               a = sarg[1][1][1][0]
-              #pp a
               @is_noauthentication = get_assoc_hash('only',a)
             end                        
           end
           if arg =~ /(authenticate_scope)/ then
             $authentication_method = 'devise'
             if arg =~ /(only)/ then
-              #debug "SM DEBUG only => "
               # TODO
               a = sarg[1][1][1][0]
-              #pp a
               @is_authenticated = get_assoc_hash('only',a)
             else
               @is_authenticated = true
             end
           end
-          #p @is_authenticated
-          #pp @is_noauthentication
         
         # ActionController::Filters::ClassMethods
         # TODO when 'skip_before_filter'
@@ -669,7 +582,6 @@ module Abstraction
           end
           # @ssl_required = true
           # TODO hash select method
-          #p @ssl_required
         when 'ssl_allowed'
           if sarg != nil then
             @ssl_allowed = get_hash(sarg)
@@ -679,8 +591,7 @@ module Abstraction
           end
           #@ssl_allowed = true #get_hash()
           # TODO hash
-          
-          #p @ssl_allowed
+
         
         # Devise
         when 'devise'
@@ -705,8 +616,6 @@ module Abstraction
           #puts "TODO command #{name} #{arg} #{@filename}"
           raise "UNKNOWN command #{sexp}" if $robust
         end        
-        #parse_sexp_common(level, sexp)
-        # "#{@indent.rjust(level)}end"
       end
       
       
@@ -722,7 +631,6 @@ module Abstraction
         var_ref = sexp[1][1][1]
         type = sexp[3][1]
         var = sexp[4][1][0][1][1][1]
-        debug "SM DEBUG add_command_call  $block_var=#{$block_var} #{var_ref}.#{type}  #{var}"
         
         command_call(level, sexp, var_ref, type, var)
                 

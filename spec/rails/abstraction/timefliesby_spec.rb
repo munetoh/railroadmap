@@ -38,6 +38,9 @@ describe Abstraction::MVC do
     # Config diagram
     $bsd_display_layout = false
     #$bsd_display_layout = true
+    
+    # B method
+    $map_bset_types = Hash.new
   end
   
   
