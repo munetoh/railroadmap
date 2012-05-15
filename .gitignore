@@ -1,0 +1,6 @@
+Gemfile.lock
+railroadmap.gemspec
+railroadmap-*.gem
+
+output/
+spec/rails/abstraction/testenv.rb
