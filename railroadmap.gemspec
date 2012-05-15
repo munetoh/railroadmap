@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "railroadmap"
-  s.version = "0.0.0"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Seiji Munetoh"]
-  s.date = "2012-05-10"
+  s.date = "2012-05-15"
   s.description = "TBD"
   s.email = "seiji.munetoh@gmail.com"
   s.executables = ["railroadmap"]
@@ -26,11 +26,15 @@ Gem::Specification.new do |s|
     "Rakefile",
     "VERSION",
     "bin/railroadmap",
+    "examples/TimeFliesBy/501d5889cce532ce30748dc33f5f9b8a83c1db28-abstraction.rb",
+    "examples/TimeFliesBy/501d5889cce532ce30748dc33f5f9b8a83c1db28.patch",
+    "examples/TimeFliesBy/README.rdoc",
     "lib/railroadmap.rb",
     "lib/railroadmap/cli.rb",
     "lib/rails/abstraction.rb",
     "lib/rails/abstraction/block.rb",
     "lib/rails/abstraction/dataflow.rb",
+    "lib/rails/abstraction/map.rb",
     "lib/rails/abstraction/model.rb",
     "lib/rails/abstraction/output/bmethod.rb",
     "lib/rails/abstraction/output/html5.rb",
@@ -41,15 +45,38 @@ Gem::Specification.new do |s|
     "lib/rails/abstraction/state.rb",
     "lib/rails/abstraction/transition.rb",
     "lib/rails/abstraction/variable.rb",
+    "lib/rails/csrf.rb",
+    "lib/rails/devise.rb",
+    "lib/rails/root.rb",
+    "lib/rails/route.rb",
     "lib/sorcerer.rb",
     "lib/sorcerer/resource.rb",
     "lib/sorcerer/subexpression.rb",
     "lib/sorcerer/version.rb",
+    "railroadmap.gemspec",
     "spec/railroadmap_spec.rb",
     "spec/rails/abstraction/block_spec.rb",
     "spec/rails/abstraction/controller_spec.rb",
+    "spec/rails/abstraction/depot_spec.rb",
     "spec/rails/abstraction/model_spec.rb",
     "spec/rails/abstraction/ruby_spec.rb",
+    "spec/rails/abstraction/sample/app/controllers/application_controller.rb",
+    "spec/rails/abstraction/sample/app/controllers/devise/confirmations_controller.rb",
+    "spec/rails/abstraction/sample/app/controllers/tags_controller.rb",
+    "spec/rails/abstraction/sample/app/controllers/tasks_controller.rb",
+    "spec/rails/abstraction/sample/app/controllers/users_controller.rb",
+    "spec/rails/abstraction/sample/app/controllers/welcome_controller.rb",
+    "spec/rails/abstraction/sample/app/models/tag.rb",
+    "spec/rails/abstraction/sample/app/models/tag_task.rb",
+    "spec/rails/abstraction/sample/app/models/task.rb",
+    "spec/rails/abstraction/sample/app/models/user.rb",
+    "spec/rails/abstraction/sample/app/views/tasks/_form.html.erb",
+    "spec/rails/abstraction/sample/app/views/tasks/edit.html.erb",
+    "spec/rails/abstraction/sample/app/views/tasks/index.html.erb",
+    "spec/rails/abstraction/sample/app/views/tasks/new.html.erb",
+    "spec/rails/abstraction/sample/app/views/tasks/show.html.erb",
+    "spec/rails/abstraction/sample/db/schema.rb",
+    "spec/rails/abstraction/testenv.rb.sample",
     "spec/rails/abstraction/timefliesby_spec.rb",
     "spec/rails/abstraction/view_spec.rb",
     "spec/spec_helper.rb"
