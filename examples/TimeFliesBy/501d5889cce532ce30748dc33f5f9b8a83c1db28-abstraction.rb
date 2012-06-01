@@ -147,9 +147,9 @@ $list_additional_transition = [
 
 
 # Variables
-$map_variable ={
-      'devise#user_signed_in?' => ['boolean','signed_in'],
-}
+#$map_variable ={
+#      'devise#user_signed_in?' => ['boolean','signed_in'],
+#}
 
 
 # Ruby code to abstracted expression (B method)
@@ -176,11 +176,24 @@ $map_guard = {
       '@task.new_record? == true' => 'update==true',
 }
 
+# TODO CFRF automatic?
+$map_guard_by_block = {
+  'V_tag#_form_R' => 'csrf_token==good',
+  'V_task#_form_R_B' => 'csrf_token==good',
+  'V_devise:unlock#new_R' => 'csrf_token==good',
+  'V_devise:confirmation#new_R' => 'csrf_token==good',
+  'V_devise:password#edit_R' => 'csrf_token==good',
+  'V_devise:password#new_R' => 'csrf_token==good', 
+  'V_devise:registration#edit_R' => 'csrf_token==good',
+  'V_devise:registration#new_R' => 'csrf_token==good',
+  'V_devise:session#new_R' => 'csrf_token==good',
+}
+
 # Actions at block
 $map_action ={
       #'V_devise:session#new_R' => 'sign_in = authentication(user,password,password_confirmation)',
       'V_devise:session#new_R'       => 'signed_in = true',
-      'C_devise:session#destroy_R_D' => 'signed_in = false'
+      'C_devise:session#destroy_R_D' => 'signed_in = false',
 }
 
 # SETS in B model for submit(POST)
@@ -196,5 +209,28 @@ $map_bset_types = {
       'reset_password_token'  => 'FLAG',
       'name'                  => 'TEXT'
 }
+
+
+# Fix transitions
+# Src (in Table)  => valid, dst, type, text, args
+$map_fix_transitions = {
+  'V_task#index[3]' => [true, 'C_task#switch_to','submit','Again', ''],
+  # delete duplications
+  'V_devise:password#edit[2]' => [false],
+  'V_devise:password#new[2]' => [false],
+  'V_devise:confirmation#new[2]' => [false],
+  'V_devise:registration#edit[3]' => [false],
+  'V_devise:registration#new[2]' => [false],
+  'V_devise:session#new[2]' => [false],
+  'V_devise:unlock#new[2]' => [false],
+  #'' => [false],
+  #'' => [false],
+  #'' => [false],
+  
+  
+  
+  
+}
+
 
 # EOF

@@ -1,27 +1,42 @@
-= Railroad Map
+= RailroadMap
 
-RailroapMap generates behavioral diagrams for Ruby on Rails applications.
-
-= Usage
+RailroapMap generates behavioral diagrams of Ruby on Rails application.
 
 
-= Install
-
- gem install railroadmap
- 
-= Uninstall
-
- gem uninstall railroadmap
-
-= Build
+== Build and Install
 
  git clone git://github.com/munetoh/railroadmap.git
  cd railroadmap
- rake -T
- rake gemspec  
  gem build railroadmap.gemspec
+ gem install railroadmap-VERSION.gem
 
-= LICENSE:
+== Uninstall
+
+ gem uninstall railroadmap
+
+
+== Abstract the RoR
+
+=== Initialize
+
+ railroadmap -i -y
+ 
+=== Abstraction table
+
+ Edit railroadmap/abstraction.rb
+
+=== Run
+
+ railroadmap
+
+=== Outputs
+
+ HTML railroadmap/index.html
+ PNG  railroadmap/railroadmap_*.png
+ B    railroadmap/railroadmap.mch
+
+
+== LICENSE:
 
 (The MIT License)
 
