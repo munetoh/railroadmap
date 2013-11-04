@@ -1,3 +1,6 @@
+# -*- coding: UTF-8 -*-
+
+#
 module Sorcerer
   VERSION_MAJOR = 0
   VERSION_MINOR = 0

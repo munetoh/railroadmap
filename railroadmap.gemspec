@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "railroadmap"
-  s.version = "0.1.0"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Seiji Munetoh"]
-  s.date = "2012-05-15"
+  s.date = "2013-11-03"
   s.description = "TBD"
   s.email = "seiji.munetoh@gmail.com"
   s.executables = ["railroadmap"]
@@ -26,29 +26,8 @@ Gem::Specification.new do |s|
     "Rakefile",
     "VERSION",
     "bin/railroadmap",
-    "examples/TimeFliesBy/501d5889cce532ce30748dc33f5f9b8a83c1db28-abstraction.rb",
-    "examples/TimeFliesBy/501d5889cce532ce30748dc33f5f9b8a83c1db28.patch",
-    "examples/TimeFliesBy/README.rdoc",
     "lib/railroadmap.rb",
     "lib/railroadmap/cli.rb",
-    "lib/rails/abstraction.rb",
-    "lib/rails/abstraction/block.rb",
-    "lib/rails/abstraction/dataflow.rb",
-    "lib/rails/abstraction/map.rb",
-    "lib/rails/abstraction/model.rb",
-    "lib/rails/abstraction/output/bmethod.rb",
-    "lib/rails/abstraction/output/html5.rb",
-    "lib/rails/abstraction/parser/ast.rb",
-    "lib/rails/abstraction/parser/controller.rb",
-    "lib/rails/abstraction/parser/model.rb",
-    "lib/rails/abstraction/parser/view.rb",
-    "lib/rails/abstraction/state.rb",
-    "lib/rails/abstraction/transition.rb",
-    "lib/rails/abstraction/variable.rb",
-    "lib/rails/csrf.rb",
-    "lib/rails/devise.rb",
-    "lib/rails/root.rb",
-    "lib/rails/route.rb",
     "lib/sorcerer.rb",
     "lib/sorcerer/resource.rb",
     "lib/sorcerer/subexpression.rb",
@@ -84,7 +63,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://github.com/munetoh/railroadmap"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.10"
+  s.rubygems_version = "1.8.24"
   s.summary = "Generate behavior model of Ruby on Rails Web application."
 
   if s.respond_to? :specification_version then
@@ -95,29 +74,32 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<ruby2ruby>, [">= 0"])
       s.add_runtime_dependency(%q<sexp_processor>, [">= 0"])
       s.add_runtime_dependency(%q<ruby_parser>, [">= 0"])
-      s.add_development_dependency(%q<rspec>, ["~> 2.3.0"])
-      s.add_development_dependency(%q<bundler>, ["~> 1.0.0"])
-      s.add_development_dependency(%q<jeweler>, ["~> 1.6.0"])
-      s.add_development_dependency(%q<ruby-graphviz>, [">= 0"])
+      s.add_runtime_dependency(%q<ruby-graphviz>, [">= 0"])
+      s.add_development_dependency(%q<rspec>, [">= 0"])
+      s.add_development_dependency(%q<bundler>, [">= 0"])
+      s.add_development_dependency(%q<jeweler>, [">= 0"])
+      s.add_development_dependency(%q<rubocop>, [">= 0"])
     else
       s.add_dependency(%q<ripper2ruby>, [">= 0"])
       s.add_dependency(%q<ruby2ruby>, [">= 0"])
       s.add_dependency(%q<sexp_processor>, [">= 0"])
       s.add_dependency(%q<ruby_parser>, [">= 0"])
-      s.add_dependency(%q<rspec>, ["~> 2.3.0"])
-      s.add_dependency(%q<bundler>, ["~> 1.0.0"])
-      s.add_dependency(%q<jeweler>, ["~> 1.6.0"])
       s.add_dependency(%q<ruby-graphviz>, [">= 0"])
+      s.add_dependency(%q<rspec>, [">= 0"])
+      s.add_dependency(%q<bundler>, [">= 0"])
+      s.add_dependency(%q<jeweler>, [">= 0"])
+      s.add_dependency(%q<rubocop>, [">= 0"])
     end
   else
     s.add_dependency(%q<ripper2ruby>, [">= 0"])
     s.add_dependency(%q<ruby2ruby>, [">= 0"])
     s.add_dependency(%q<sexp_processor>, [">= 0"])
     s.add_dependency(%q<ruby_parser>, [">= 0"])
-    s.add_dependency(%q<rspec>, ["~> 2.3.0"])
-    s.add_dependency(%q<bundler>, ["~> 1.0.0"])
-    s.add_dependency(%q<jeweler>, ["~> 1.6.0"])
     s.add_dependency(%q<ruby-graphviz>, [">= 0"])
+    s.add_dependency(%q<rspec>, [">= 0"])
+    s.add_dependency(%q<bundler>, [">= 0"])
+    s.add_dependency(%q<jeweler>, [">= 0"])
+    s.add_dependency(%q<rubocop>, [">= 0"])
   end
 end
 

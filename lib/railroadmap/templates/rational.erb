@@ -1,0 +1,45 @@
+<div class="dashboard_container" id="<%= title.gsub(/[^a-zA-Z]/, '') %>">
+  <h2>
+    <span class="group_name"><%= title %></span>
+    (<span class="covered_percent"><span class="<%= coverage_css_class(50) %>"><%= 50.round(2) %>%</span></span>
+     covered at
+     <span class="covered_strength">
+       <span class="<%= strength_css_class(50) %>">
+         <%= rationals.count %>
+       </span>
+    </span> attack vectors)
+  </h2>
+  <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
+  <div>
+    <b><%= rationals.count %></b> attacks in total.
+    <b><%= 50 %></b> relevant locations. 
+    <span class="green"><b><%= 50 %></b> lines covered</span> and
+    <span class="red"><b><%= 50 %></b> lines missed </span>
+  </div>
+  <table class="rational_list">
+    <thead>
+      <tr>
+        <th>Asset</th>
+        <th>Policy</th>
+        <th>Weakness</th>
+        <th>Security function</th>
+        <th>Attack</th>
+        <th>Test(full)</th>
+        <th>Test(min)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rationals.each do |r| %>
+      <tr>
+        <td class="strong"><%= r.asset.domain %></td>
+        <td><%= r.policy %></td>
+        <td><%= r.weakness %></td>
+        <td><%= r.securityfunction %></td>
+        <td><%= r.attack %></td>
+        <td><%= r.testfull %></td>
+        <td><%= r.testmin %></td>
+      </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'rspec'
 
-require 'rails/abstraction'
+require 'railroadmap/rails/abstraction'
 
 
 

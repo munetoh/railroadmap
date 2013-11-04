@@ -1,0 +1,21 @@
+<div class="dashboard_container" id="<%= title.gsub(/[^a-zA-Z]/, '') %>">
+  <h2>
+    <span class="group_name"><%= title %></span>
+  </h2>
+  <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
+  <div>
+    <b><%= 50 %></b> attacks in total.
+    <b><%= 50 %></b> relevant locations. 
+    <span class="green"><b><%= 50 %></b> lines covered</span> and
+    <span class="red"><b><%= 50 %></b> lines missed </span>
+  </div>
+  
+  <h3>Behavior State Diagram (View-Controller-View)</h3>
+
+  <div id="world"></div>
+
+  <h3>Dataflow Diagram (View-Variable-View)</h3>
+
+  <div id="world1"></div>
+
+</div>

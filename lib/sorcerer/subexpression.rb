@@ -1,4 +1,8 @@
+# -*- coding: UTF-8 -*-
+
+#
 module Sorcerer
+  #
   class Subexpression
     def initialize(sexp)
       @sexp = sexp

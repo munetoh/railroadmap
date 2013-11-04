@@ -1,54 +1,60 @@
-#!/usr/bin/env ruby
+# -*- coding: UTF-8 -*-
 
 require 'ripper'
 
-module Sorcerer 
+#
+module Sorcerer
+  #
   class Resource
+    #
     class NoHandlerError < StandardError
     end
-    
-    def initialize(sexp, debug=false)
+
+    def initialize(sexp, debug = false)
       @sexp = sexp
       @source = ''
       @debug = debug
       @word_level = 0
     end
-    
+
     def source
       resource(@sexp)
       @source
     end
-    
+
     def resource(sexp)
       return unless sexp
-      
-      if sexp.first.class == Array then
+
+      if sexp.first.class == Array
         sexp.each do |s|
           resource(s)
-          emit(", ")  # TODO put between res
+          emit(", ")  # TODO: put between res
         end
-        
         return
-        #raise "Array"
+        # raise "Array"
       end
-      
+
       # 2012-03-11
-      if sexp.first == nil then
-        #puts "sexp.first == nil"
-        #raise "nil sexp"
+      if sexp.first.nil?
+        # puts "sexp.first == nil"
+        # raise "nil sexp"
         return
       end
-      
+
       handler = HANDLERS[sexp.first]
-      #puts "sexp.first #{sexp.first.class} #{sexp.first} "
-      #raise NoHandlerError.new(sexp.first) unless handler
+      # puts "sexp.first #{sexp.first.class} #{sexp.first} "
+      # raise NoHandlerError.new(sexp.first) unless handler
+      if handler.nil?
+        $log.error "No handler for #{sexp.first}"
+        pp sexp
+      end
       if @debug
         puts "----------------------------------------------------------"
-        pp sexp
+        pp sexp  # debug
       end
       handler.call(self, sexp)
     end
-    
+
     def handle_block(sexp)
       resource(sexp[1])     # Arguments
       if ! void?(sexp[2])
@@ -57,26 +63,28 @@ module Sorcerer
       end
       emit(" ")
     end
-    
+
     def opt_parens(sexp)
       emit(" ") unless sexp.first == :arg_paren || sexp.first == :paren
       resource(sexp)
     end
-    
+
     def emit(string)
       puts "EMITTING '#{string}'" if @debug
       @source << string.to_s
     end
-    
+
+    # Not Yet Implementred?
     def nyi(sexp)
+      pp sexp  # raise
       raise "Handler for #{sexp.first} not implemented (#{sexp.inspect})"
     end
-    
+
     def emit_separator(sep, first)
       emit(sep) unless first
       false
     end
-    
+
     def params(normal_args, default_args, rest_args, unknown, block_arg)
       first = true
       if normal_args
@@ -102,7 +110,7 @@ module Sorcerer
         resource(block_arg)
       end
     end
-    
+
     def words(marker, sexp)
       emit("%#{marker}{") if @word_level == 0
       @word_level += 1
@@ -114,29 +122,33 @@ module Sorcerer
       @word_level -= 1
       emit("}") if @word_level == 0
     end
-    
+
     VOID_STATEMENT = [:stmts_add, [:stmts_new], [:void_stmt]]
     VOID_BODY = [:body_stmt, VOID_STATEMENT, nil, nil, nil]
     VOID_BODY2 = [:bodystmt, VOID_STATEMENT, nil, nil, nil]
-    
+
     def void?(sexp)
       sexp.nil? ||
         sexp == VOID_STATEMENT ||
         sexp == VOID_BODY ||
         sexp == VOID_BODY2
     end
-    
+
     NYI = lambda { |src, sexp| src.nyi(sexp) }
     DBG = lambda { |src, sexp| pp(sexp) }
+    ERR = lambda { |src, sexp|
+      $log.error "SORCERER command_call TODO"
+      pp(sexp)
+    }
+
     NOOP = lambda { |src, sexp| }
     SPACE = lambda { |src, sexp| src.emit(" ") }
     PASS1 = lambda { |src, sexp| src.resource(sexp[1]) }
     PASS2 = lambda { |src, sexp| src.resource(sexp[2]) }
     EMIT1 = lambda { |src, sexp| src.emit(sexp[1]) }
-    
+
     HANDLERS = {
       # parser keywords
-      
       :BEGIN => lambda { |src, sexp|
         src.emit("BEGIN {")
         unless src.void?(sexp[1])
@@ -180,32 +192,26 @@ module Sorcerer
       },
       :args_add => lambda { |src, sexp|
         src.resource(sexp[1])
-        if sexp[1].first != :args_new
-          src.emit(", ")
-        end
+        src.emit(", ") if sexp[1].first != :args_new
         src.resource(sexp[2])
       },
       :args_add_block => lambda { |src, sexp|
-        #puts ":args_add_block #{sexp}"
-        #puts ":args_add_block 1 #{sexp[1]}"
+        # puts ":args_add_block #{sexp}"
+        # puts ":args_add_block 1 #{sexp[1]}"
         src.resource(sexp[1])
         if sexp[2]
-          if sexp[1].first != :args_new
-            src.emit(", ")
-          end
+          src.emit(", ") if sexp[1].first != :args_new
           if sexp[2]
             src.emit("&")
             src.resource(sexp[2])
           end
         else
-          #puts ":args_add_block !sexp[2]"
+          # puts ":args_add_block !sexp[2]"
         end
       },
       :args_add_star => lambda { |src, sexp|
         src.resource(sexp[1])
-        if sexp[1].first != :args_new
-          src.emit(", ")
-        end
+        src.emit(", ") if sexp[1].first != :args_new
         src.emit("*")
         src.resource(sexp[2])
       },
@@ -237,7 +243,7 @@ module Sorcerer
       },
       :bare_assoc_hash => lambda { |src, sexp|
         first = true
-        sexp[1].each do |sx|      
+        sexp[1].each do |sx|
           src.emit(", ") unless first
           first = false
           src.resource(sx)
@@ -285,6 +291,13 @@ module Sorcerer
         src.emit(sexp[2])
         src.resource(sexp[3]) unless sexp[3] == :call
       },
+      # TODO
+      # From Ruby 1.9.3?
+      :vcall => lambda { |src, sexp|
+        src.resource(sexp[1])
+        src.emit(sexp[2])
+        src.resource(sexp[3]) unless sexp[3] == :call
+      },
       :case => lambda { |src, sexp|
         src.emit("case ")
         src.resource(sexp[1])
@@ -309,7 +322,16 @@ module Sorcerer
         src.emit(" ")
         src.resource(sexp[2])
       },
-      :command_call => NYI,
+      # :command_call => NYI,
+      # :command_call => ERR,
+      # 2012/06/19 TODO
+      :command_call =>  lambda { |src, sexp|
+        src.resource(sexp[1])
+        src.emit(sexp[2])
+        src.resource(sexp[3]) # unless sexp[3] == :call
+        src.emit(" ")
+        src.resource(sexp[4])
+      },
       :const_path_field => lambda { |src, sexp|
         src.resource(sexp[1])
         src.emit("::")
@@ -524,7 +546,7 @@ module Sorcerer
             src.resource(sexp[1].first)
           end
           src.emit(" => ")
-          src.resource(sexp[2]) 
+          src.resource(sexp[2])
         end
         src.emit(";")
         if sexp[3]                # Rescue Code
@@ -551,7 +573,7 @@ module Sorcerer
       },
       :return => lambda { |src, sexp|
         src.emit("return")
-        src.opt_parens(sexp[1])      
+        src.opt_parens(sexp[1])
       },
       :return0 => lambda { |src, sexp|
         src.emit("return")
@@ -574,9 +596,8 @@ module Sorcerer
         src.emit(" ")
         src.resource(sexp[2])
       },
-      #:string_content => NOOP,
+      # :string_content => NOOP,
       :string_content => lambda { |src, sexp|
-        #puts ":string_content #{sexp}"
         src.resource(sexp[1])
       },
       :string_dvar => NYI,
@@ -586,7 +607,6 @@ module Sorcerer
         src.emit('}')
       },
       :string_literal => lambda { |src, sexp|
-        #puts ":string_literal #{sexp}"
         src.emit('"')
         src.resource(sexp[1])
         src.emit('"')
@@ -601,9 +621,14 @@ module Sorcerer
       },
       :symbol_literal => PASS1,
       :top_const_field => NYI,
-      :top_const_ref => NYI,
+
+      #:top_const_ref => NYI,
+      :top_const_ref => PASS1,
+      # [:top_const_ref, [:@const, "Rails", [51, 16]]])
+      # runcmd "#{::Rails.root}/script/delayed_job status"
+      #             ^^^^^
       :unary => lambda { |src, sexp|
-        src.emit(sexp[1].to_s[0,1])
+        src.emit(sexp[1].to_s[0, 1])
         src.resource(sexp[2])
       },
       :undef => lambda { |src, sexp|
@@ -644,10 +669,8 @@ module Sorcerer
         src.resource(sexp[1])
         src.emit("; ")
         src.resource(sexp[2])
-        if sexp[3] && sexp[3].first == :when
-          src.emit(" ")
-        end
-        src.resource(sexp[3])      
+        src.emit(" ") if sexp[3] && sexp[3].first == :when
+        src.resource(sexp[3])
       },
       :while => lambda { |src, sexp|
         src.emit("while ")
@@ -687,19 +710,19 @@ module Sorcerer
       :zsuper => lambda { |src, sexp|
         src.emit("super")
       },
-      
-      #:@label => lambda { |src, sexp|
-        #pp sexp
-        #pp sexp[1]
-        #src.emit("label")
-      #  src.emit(sexp[1])
-      #},
-      
+
+      # :@label => lambda { |src, sexp|
+      #   src.emit("label")
+      #   src.emit(sexp[1])
+      # },
       # Scanner keywords
-      
       :@CHAR => NYI,
       :@__end__ => NYI,
-      :@backref => NYI,
+      # :@backref => NYI,
+      #  ($1)
+      :@backref => EMIT1,
+      # :@backref => PASS1,  <= NG
+
       :@backtick => NYI,
       :@comma => NYI,
       :@comment => NYI,
@@ -747,5 +770,4 @@ module Sorcerer
     }
     HANDLERS[:bodystmt] = HANDLERS[:body_stmt]
   end
-  
 end

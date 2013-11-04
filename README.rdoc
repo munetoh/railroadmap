@@ -1,40 +1,37 @@
 = RailroadMap
 
-RailroapMap generates behavioral diagrams of Ruby on Rails application.
+RailroapMap is a static security testing tool for Ruby on Rails application.
+- Eliciting security requirements from the code
+- Tesing security design
 
+== Setup
 
-== Build and Install
+ Gemfile
 
- git clone git://github.com/munetoh/railroadmap.git
- cd railroadmap
- gem build railroadmap.gemspec
- gem install railroadmap-VERSION.gem
-
-== Uninstall
-
- gem uninstall railroadmap
+ gem 'railroadmap', github: 'munetoh/railroadmap'
 
 
 == Abstract the RoR
 
 === Initialize
 
- railroadmap -i -y
+ railroadmap init
  
-=== Abstraction table
+ ./railroadmap/config.rb
+ ./railroadmap/abstraction.rb
+ ./railroadmap/requirements.rb
 
- Edit railroadmap/abstraction.rb
+=== Generating Navigation model and Dataflow model
 
-=== Run
+ railroadmap genmodel
 
- railroadmap
+=== Security test
+
+ railroadmap sectest
 
 === Outputs
 
  HTML railroadmap/index.html
- PNG  railroadmap/railroadmap_*.png
- B    railroadmap/railroadmap.mch
-
 
 == LICENSE:
 

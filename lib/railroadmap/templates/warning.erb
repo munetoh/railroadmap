@@ -1,0 +1,123 @@
+<div class="dashboard_container" id="<%= title.gsub(/[^a-zA-Z]/, '') %>">
+  <h2>
+    <span class="group_name"><%= title %></span>
+    (<span class="covered_percent"><span class="<%= warning_css_class(total_warning_count) %>">
+    <%= total_warning_count %>
+    </span></span>
+     warnings)
+  </h2>
+  <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
+
+
+  <h3> </h3>
+  <h3> 
+    RailroadMap Warnings
+    (<span class="covered_percent"><span class="<%= warning_css_class(railroadmap_warning_count) %>">
+    <%= railroadmap_warning_count %>
+    </span></span>
+     warnings) 
+  </h3>
+  <table class="warning_list">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Confidence</th>
+        <th>Type</th>
+        <th>Message</th>
+        <th>file</th>
+        <th>line</th>
+        <th>NavModel(state)</th>
+        <th>NavModel(variable)</th>
+        <th>Test type</th>
+        <th>Test result</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% warnings.each do |key, warning| %>
+        <% if warning['confidence'] != 'FalsePositive' %>
+          <tr class="<%= unclear_css_class(warning['test_result'] == 'True-positive') %>">
+            <!--<td>RRMW<%= "%04d" % warning['id'] %></td>-->
+            <td><%= key %></td>
+            <td><%= warning['confidence'] %></td>
+            <td><%= warning['warning_type'] %></td>
+            <td><%= warning['message'] %></td>
+            <td><%= warning['file2'] %></td>
+            <td><%= warning['line'] %></td>
+            <td><%= warning['hit_state'] %></td>
+            <td><%= warning['hit_variable'] %></td>
+            <td><%= warning['test_type'] %></td>
+            <td><%= warning['test_result'] %></td>
+          </tr>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>
+
+  <h3> </h3>
+  <h3> RailroadMap Supressed Warnings (FalsePositive)</h3>
+  <table class="fp_warning_list">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Confidence</th>
+        <th>Type</th>
+        <th>Message</th>
+        <th>Reason</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% warnings.each do |k, warning| %>
+        <% if warning['confidence'] == 'FalsePositive' %>
+          <tr>
+            <td>RRMW<%= "%04d" % warning['id'] %></td>
+            <td><%= warning['confidence'] %></td>
+            <td><%= warning['warning_type'] %></td>
+            <td><%= warning['message'] %></td>
+            <td><%= warning['falspositive'] %></td>
+          </tr>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>  
+  <h3> </h3>
+  <h3> RailroadMap Errors (TBD)</h3>
+
+  <h3> </h3>
+  <h3> 
+    Brakeman Warnings
+    (<span class="covered_percent"><span class="<%= warning_css_class(brakeman_warning_count) %>">
+    <%= brakeman_warning_count %>
+    </span></span>
+     warnings) 
+  </h3>
+  <table class="brakeman_warning_list">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Confidence</th>
+        <th>Type</th>
+        <th>Message</th>
+        <th>file</th>
+        <th>line</th>
+        <th>NavModel(state)</th>
+        <th>NavModel(variable)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% brakeman_warnings.each do |warning| %>
+      <tr>
+        <td>BMW <%= warning['id'] %></td>
+        <td><%= warning['confidence'] %></td>
+        <td><%= warning['warning_type'] %></td>
+        <td><%= warning['message'] %></td>
+        <td><%= warning['file2'] %></td>
+        <td><%= warning['line'] %></td>
+        <td><%= warning['hit_state'] %></td>
+        <td><%= warning['hit_variable'] %></td>
+      </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <h3> </h3>
+  <h3> Brakeman Errors (TBD)</h3>
+</div>

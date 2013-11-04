@@ -1,9 +1,8 @@
 require 'rubygems'
 require 'rspec'
-
-require 'rails/abstraction'
-
 require 'pp'
+
+require 'railroadmap/rails/abstraction'
 
 # DEBUG
 # require 'tracer'
@@ -14,8 +13,7 @@ $log = Logger.new(STDOUT)
 $log.level = Logger::ERROR
 
 describe Abstraction::Block do
-  
-  
+
   # Setup
   it ": create global hash tables" do
     $abst_states =      Hash.new
@@ -23,21 +21,20 @@ describe Abstraction::Block do
     $abst_variables =   Hash.new
     $abst_dataflows =   Hash.new
   end
-  
+
   it ": create global variables" do
     $verbose = 0
     #$verbose = 1
     #$verbose = 3
     $robust = false
   end
-  
-  
+
   # Test data, state and variables
   it ": create test data" do
     p = Abstraction::Parser::AstParser.new
-    
+
     # state
-    
+
     # variables
     p.add_variable('model',     'task',      'obj',    'app/model/task.rb')
     p.add_variable('model_att', 'task#name', 'string', 'model/hoge.rb')
@@ -50,7 +47,7 @@ describe Abstraction::Block do
     p.add_variable('controller', 'user#edit#@user', 'obj', 'app/controller/users_controller.rb')
     p.add_variable('controller', 'user#update#@user', 'obj', 'app/controller/users_controller.rb')
   end
-   
+
   #
   # TEST 1
   #
@@ -58,7 +55,7 @@ describe Abstraction::Block do
     $block_root = Abstraction::Block.new
     $block_root.type = 'root'
     $block_root.id = 'C_user#edit_R'
-    $block = $block_root  # set current block,  => root   
+    $block = $block_root  # set current block,  => root
   end
 
   it ": create child do block object" do
@@ -81,8 +78,8 @@ describe Abstraction::Block do
   
   it ": create other else block object" do
     $block.add('else', nil, nil)
-  end  
-  
+  end
+
   #
   # complete_condition(tcond)
   #
@@ -90,7 +87,7 @@ describe Abstraction::Block do
     guard2abst = Hash.new
     guard2abst['task.size > 0'] = 'task exist'
     guard2abst['sign_in == true'] = 'sign_in'
-    
+
     guard2abst_byblk = Hash.new # TODO
     $block_root.complete_condition(nil, nil, guard2abst, guard2abst_byblk)
   end

@@ -1,0 +1,48 @@
+
+
+GlobalVars:
+  Enabled: false
+
+StringLiterals:
+  Enabled: false
+
+LineLength:
+  Enabled: false
+
+BlockNesting:
+  Enabled: false
+
+MethodLength:
+  Enabled: false
+
+ClassLength:
+  Enabled: false
+
+RegexpLiteral:
+  Enabled: false
+
+# NG w/ ERB
+UselessAssignment:
+  Enabled: false
+
+RedundantReturn:
+  Enabled: false
+
+# Prefer map over collect.
+CollectionMethods:
+  Enabled: false
+
+WordArray:
+  Enabled: false
+
+RedundantBegin:
+  Enabled: false
+
+ParameterLists:
+  Enabled: false
+
+MultilineTernaryOperator:
+  Enabled: false
+
+Blocks:
+  Enabled: false

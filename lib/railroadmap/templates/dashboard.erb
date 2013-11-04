@@ -1,0 +1,45 @@
+<div class="dashboard_container" id="<%= title.gsub(/[^a-zA-Z]/, '') %>">
+  <h2>
+    <span class="group_name"><%= title %></span>
+    (<span class="covered_percent"><span class="<%= coverage_css_class(coverage) %>"><%= coverage.round(2) %>%</span></span>
+     covered at
+     <span class="covered_strength">
+       <span class="<%= strength_css_class(50) %>">
+         <%= weaknesses.length %>
+       </span>
+    </span> weakness)
+  </h2>
+  <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
+  <div>
+    <b><%= 50 %></b> weaknesses in total.
+    <b><%= 50 %></b> relevant locations. 
+    <span class="green"><b><%= 50 %></b> lines covered</span> and
+    <span class="red"><b><%= 50 %></b> lines missed </span>
+  </div>
+
+  <h3> Overall </h3>
+  <table class="dashboard_list">
+    <thead>
+      <tr>
+        <th>Threat/Weakness</th>
+        <th>Security feature</th>
+        <th>Assets</th>
+        <th>Test cases</th>
+        <th>% covered</th>
+        <th>Comments</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% weaknesses.each do |weakness| %>
+      <tr>
+        <td class="strong"><%= weakness.name %></td>
+        <td><%= weakness.feature %></td>
+        <td><%= weakness.locations.count %></td>
+        <td><%= weakness.locations.count %></td>
+        <td class="<%= coverage_css_class(weakness.covered_percent) %> strong"><%= weakness.covered_percent.round(2).to_s %> %</td>
+        <td><%= weakness.note %></td>
+      </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
