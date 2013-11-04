@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Seiji Munetoh"]
-  s.date = "2013-11-03"
+  s.date = "2013-11-04"
   s.description = "TBD"
   s.email = "seiji.munetoh@gmail.com"
   s.executables = ["railroadmap"]
@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
     "README.rdoc"
   ]
   s.files = [
+    ".rubocop.yml",
     ".rvmrc",
     "Gemfile",
     "History.txt",
@@ -28,6 +29,94 @@ Gem::Specification.new do |s|
     "bin/railroadmap",
     "lib/railroadmap.rb",
     "lib/railroadmap/cli.rb",
+    "lib/railroadmap/config-file.rb",
+    "lib/railroadmap/dashboard.rb",
+    "lib/railroadmap/errors.rb",
+    "lib/railroadmap/libpeerconnection.log",
+    "lib/railroadmap/map.rb",
+    "lib/railroadmap/rails/abstraction.rb",
+    "lib/railroadmap/rails/abstraction/attack.rb",
+    "lib/railroadmap/rails/abstraction/block.rb",
+    "lib/railroadmap/rails/abstraction/command.rb",
+    "lib/railroadmap/rails/abstraction/dataflow.rb",
+    "lib/railroadmap/rails/abstraction/filter.rb",
+    "lib/railroadmap/rails/abstraction/map.rb",
+    "lib/railroadmap/rails/abstraction/mark.rb",
+    "lib/railroadmap/rails/abstraction/output/bmethod.rb",
+    "lib/railroadmap/rails/abstraction/output/cucumber.rb",
+    "lib/railroadmap/rails/abstraction/parser/ast.rb",
+    "lib/railroadmap/rails/abstraction/parser/controller.rb",
+    "lib/railroadmap/rails/abstraction/parser/model.rb",
+    "lib/railroadmap/rails/abstraction/parser/view.rb",
+    "lib/railroadmap/rails/abstraction/policy.rb",
+    "lib/railroadmap/rails/abstraction/security-function.rb",
+    "lib/railroadmap/rails/abstraction/state.rb",
+    "lib/railroadmap/rails/abstraction/transition.rb",
+    "lib/railroadmap/rails/abstraction/variable.rb",
+    "lib/railroadmap/rails/authlogic.rb",
+    "lib/railroadmap/rails/cancan.rb",
+    "lib/railroadmap/rails/csrf.rb",
+    "lib/railroadmap/rails/cucumber.rb",
+    "lib/railroadmap/rails/devise.rb",
+    "lib/railroadmap/rails/pdp.rb",
+    "lib/railroadmap/rails/rails-commands.rb",
+    "lib/railroadmap/rails/requirement.rb",
+    "lib/railroadmap/rails/root.rb",
+    "lib/railroadmap/rails/route.rb",
+    "lib/railroadmap/rails/security-check.rb",
+    "lib/railroadmap/rails/the-role.rb",
+    "lib/railroadmap/rails/xss.rb",
+    "lib/railroadmap/security-assurance-model.rb",
+    "lib/railroadmap/templates/assets/application.css",
+    "lib/railroadmap/templates/assets/application.js",
+    "lib/railroadmap/templates/assets/fancybox/blank.gif",
+    "lib/railroadmap/templates/assets/fancybox/fancy_close.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_loading.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_nav_left.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_nav_right.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_shadow_e.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_shadow_n.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_shadow_ne.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_shadow_nw.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_shadow_s.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_shadow_se.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_shadow_sw.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_shadow_w.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_title_left.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_title_main.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_title_over.png",
+    "lib/railroadmap/templates/assets/fancybox/fancy_title_right.png",
+    "lib/railroadmap/templates/assets/fancybox/fancybox-x.png",
+    "lib/railroadmap/templates/assets/fancybox/fancybox-y.png",
+    "lib/railroadmap/templates/assets/fancybox/fancybox.png",
+    "lib/railroadmap/templates/assets/favicon_green.png",
+    "lib/railroadmap/templates/assets/favicon_red.png",
+    "lib/railroadmap/templates/assets/favicon_yellow.png",
+    "lib/railroadmap/templates/assets/loading.gif",
+    "lib/railroadmap/templates/assets/magnify.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-bg_flat_0_aaaaaa_40x100.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-bg_flat_75_ffffff_40x100.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-bg_glass_55_fbf9ee_1x400.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-bg_glass_65_ffffff_1x400.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-bg_glass_75_dadada_1x400.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-bg_glass_75_e6e6e6_1x400.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-bg_glass_95_fef1ec_1x400.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-bg_highlight-soft_75_cccccc_1x100.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-icons_222222_256x240.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-icons_2e83ff_256x240.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-icons_454545_256x240.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-icons_888888_256x240.png",
+    "lib/railroadmap/templates/assets/smoothness/images/ui-icons_cd0a0a_256x240.png",
+    "lib/railroadmap/templates/dashboard.erb",
+    "lib/railroadmap/templates/design.erb",
+    "lib/railroadmap/templates/diagram.erb",
+    "lib/railroadmap/templates/file_list.erb",
+    "lib/railroadmap/templates/layout.erb",
+    "lib/railroadmap/templates/navmodel.erb",
+    "lib/railroadmap/templates/rational.erb",
+    "lib/railroadmap/templates/source_file.erb",
+    "lib/railroadmap/templates/warning.erb",
+    "lib/railroadmap/warning.rb",
     "lib/sorcerer.rb",
     "lib/sorcerer/resource.rb",
     "lib/sorcerer/subexpression.rb",
@@ -36,7 +125,6 @@ Gem::Specification.new do |s|
     "spec/railroadmap_spec.rb",
     "spec/rails/abstraction/block_spec.rb",
     "spec/rails/abstraction/controller_spec.rb",
-    "spec/rails/abstraction/depot_spec.rb",
     "spec/rails/abstraction/model_spec.rb",
     "spec/rails/abstraction/ruby_spec.rb",
     "spec/rails/abstraction/sample/app/controllers/application_controller.rb",
@@ -56,7 +144,6 @@ Gem::Specification.new do |s|
     "spec/rails/abstraction/sample/app/views/tasks/show.html.erb",
     "spec/rails/abstraction/sample/db/schema.rb",
     "spec/rails/abstraction/testenv.rb.sample",
-    "spec/rails/abstraction/timefliesby_spec.rb",
     "spec/rails/abstraction/view_spec.rb",
     "spec/spec_helper.rb"
   ]
@@ -75,9 +162,11 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<sexp_processor>, [">= 0"])
       s.add_runtime_dependency(%q<ruby_parser>, [">= 0"])
       s.add_runtime_dependency(%q<ruby-graphviz>, [">= 0"])
-      s.add_development_dependency(%q<rspec>, [">= 0"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.4.0"])
       s.add_development_dependency(%q<bundler>, [">= 0"])
       s.add_development_dependency(%q<jeweler>, [">= 0"])
+      s.add_development_dependency(%q<rails>, [">= 0"])
+      s.add_development_dependency(%q<haml>, [">= 0"])
       s.add_development_dependency(%q<rubocop>, [">= 0"])
     else
       s.add_dependency(%q<ripper2ruby>, [">= 0"])
@@ -85,9 +174,11 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<sexp_processor>, [">= 0"])
       s.add_dependency(%q<ruby_parser>, [">= 0"])
       s.add_dependency(%q<ruby-graphviz>, [">= 0"])
-      s.add_dependency(%q<rspec>, [">= 0"])
+      s.add_dependency(%q<rspec>, ["~> 2.4.0"])
       s.add_dependency(%q<bundler>, [">= 0"])
       s.add_dependency(%q<jeweler>, [">= 0"])
+      s.add_dependency(%q<rails>, [">= 0"])
+      s.add_dependency(%q<haml>, [">= 0"])
       s.add_dependency(%q<rubocop>, [">= 0"])
     end
   else
@@ -96,9 +187,11 @@ Gem::Specification.new do |s|
     s.add_dependency(%q<sexp_processor>, [">= 0"])
     s.add_dependency(%q<ruby_parser>, [">= 0"])
     s.add_dependency(%q<ruby-graphviz>, [">= 0"])
-    s.add_dependency(%q<rspec>, [">= 0"])
+    s.add_dependency(%q<rspec>, ["~> 2.4.0"])
     s.add_dependency(%q<bundler>, [">= 0"])
     s.add_dependency(%q<jeweler>, [">= 0"])
+    s.add_dependency(%q<rails>, [">= 0"])
+    s.add_dependency(%q<haml>, [">= 0"])
     s.add_dependency(%q<rubocop>, [">= 0"])
   end
 end
