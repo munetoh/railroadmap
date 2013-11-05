@@ -1,6 +1,14 @@
+=== 0.2.0 / 2013-11-04 (Seiji Munetoh)
+* changed code structure
+* new command library for common abstraction
+* new requirements support
+* added haml parser
+* added the_role library
+* added authlogic library (interim support)
+
 === 0.1.0 / 2012-05-14 (Seiji Munetoh)
 * added abstraction features
-* state digram and dataflow diagram
+* added state diagram and dataflow diagram
 * added HTML5 output
 * added B method output
 * added PNG(graphviz) output
