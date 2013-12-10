@@ -98,6 +98,7 @@ module Abstraction
     # check existance of code policy
     def exist?
       return true if is_authenticated
+      return true if is_authorized
       # TODO: else?
       return false
     end

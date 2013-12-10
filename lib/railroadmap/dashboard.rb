@@ -117,6 +117,22 @@ class Dashboard
     end
   end
 
+  def errors_css_class(count)
+    if count == 0
+      'green'
+    else
+      'red'
+    end
+  end
+
+  def errors_css_tr_class(count)
+    if count == 1
+      'green'
+    else
+      'red'
+    end
+  end
+
   def unclear_css_tr_class(flag, msg)
     if flag
       "class=\"error_bg\" title=\"#{msg}\""
@@ -189,9 +205,14 @@ class Dashboard
   #   brakeman_warnings Array
   def warning(title, smodel)
     warnings = smodel.warnings
-    brakeman_warnings = smodel.brakeman_warnings
     railroadmap_warning_count = warnings.size
+
+    errors = smodel.errors
+    railroadmap_errors_count = smodel.errors_count
+
+    brakeman_warnings = smodel.brakeman_warnings
     brakeman_warning_count = brakeman_warnings.size
+
     total_warning_count = railroadmap_warning_count + brakeman_warning_count
     template('warning').result(binding)
   end

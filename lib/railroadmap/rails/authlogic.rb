@@ -46,4 +46,12 @@ module Rails
       }
     end
   end
+
+  def compleate_pep_assignment
+    $log.error "compleate_pep_assignment TODO:"
+  end
+
+  def print_stat
+    $log.error "print_stat TODO:"
+  end
 end

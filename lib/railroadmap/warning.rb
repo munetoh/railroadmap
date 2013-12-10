@@ -27,7 +27,6 @@ class Warning
   # w : hash
   def add(w)
     w['id'] = @count
-    # key = "RRMW%04d" % @count
     key = format("RRMW%04d", @count)
     @count += 1
     @warnings[key] = w

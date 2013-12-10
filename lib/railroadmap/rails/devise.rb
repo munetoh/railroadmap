@@ -369,5 +369,99 @@ module Rails
       $map_variable['devise#user_signed_in?'] = ['boolean', 'signed_in']
       $log.info "Added variables, devise#user_signed_in? for devise. "
     end
+
+    #--------------------------------------------------------------------------
+    # Code side
+    # called after load
+    def compleate_pep_assignment
+      puts "    Devise: compleate PEP assignment"
+      # Transitions
+      # set V->C edge
+      $abst_transitions.each do |k, t|
+        src = $abst_states[t.src_id]
+        dst = $abst_states[t.dst_id]
+        if !src.nil? && !dst.nil?
+          if src.type == 'view' && dst.type == 'controller'
+            t.authentication_filter = t.block.get_authentication_filter
+          end
+        end
+      end
+    end
+
+    def print_stat
+      # commands
+      puts ""
+      puts "    #{@name} commands"
+      puts "                                  Command    count"
+      puts "  ------------------------------------------------------------------"
+      $abst_commands.each do |k, c|
+        # set color
+        if c.providedby == @name # 'cancan'
+          count = c.count.to_s
+          puts "  #{c.name.rjust(40)}  #{count.rjust(6)}"
+        end
+      end
+      puts "  ------------------------------------------------------------------"
+    end
+
+    #--------------------------------------------------------------------------
+    # Req side
+    def print_sample_requirements_base_policies
+      puts "  'user' => {"
+      puts "    model_alias: { # map devise to appmodel"
+      puts "      'devise:registration'      => 'user',"
+      puts "      'devise:session'           => 'user',"
+      puts "      'devise:password'          => 'user',"
+      puts "      'devise:confirmation'      => 'user',"
+      puts "      'devise:unlock'            => 'user',"
+      puts "      'devise:omniauth_callback' => 'user' },"
+      puts "    is_authenticated: true,"
+      puts "    level:            10,  # admin"
+      puts "    color: 'orange',"
+      if $authorization_module.nil?
+        puts "  # no authorization"
+      else
+        puts "    is_authorized:    true,"  # TODO: check
+        puts "    roles: ["
+        puts "      { role: 'admin', action: 'CRUD' },"
+        puts "      { role: 'user',  action: 'CRU', is_owner: true } ]"
+      end
+      puts "   },"
+      return ['user']
+    end
+
+    def print_sample_requirements_mask_policies
+      puts "# Devise"
+      puts "# public"
+      puts "  'C_devise:session#new'         => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:session#create'      => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:session#destroy'     => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:registration#new'    => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:registration#create' => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:registration#cancel' => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:unlock#new'          => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:unlock#show'         => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:unlock#create'       => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:confirmation#new'    => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:confirmation#show'   => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:confirmation#create' => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:password#new'        => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:password#edit'       => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:password#create'     => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:password#update'     => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:omniauth_callback#passthru'  => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  'C_devise:omniauth_callback#failure'   => { is_authenticated: false, level: 0, color: 'green' },"
+      puts "  # any role"
+      puts "  'C_devise:registration#edit'    => { is_authenticated: true, is_authorized: false, level: 15, color: 'red' },"
+      puts "  'C_devise:registration#update'  => { is_authenticated: true, is_authorized: false, level: 15, color: 'red' },"
+      puts "  'C_devise:registration#destroy' => { is_authenticated: true, is_authorized: false, level: 15, color: 'red' },"
+      puts "   # ignore"
+      puts "  'V_devise#_links'                             => { ignore: true },"
+      puts "  'V_devise:mailer#reset_password_instructions' => { ignore: true },"
+      puts "  'V_devise:mailer#unlock_instructions'         => { ignore: true },"
+      puts "  'V_devise:mailer#confirmation_instructions'   => { ignore: true },"
+
+      return []
+    end
   end
 end

@@ -265,7 +265,7 @@ module Railroadmap
       # -----------------------------------------------------------------------
       if options[:initonly]
         # Exit here
-        puts "init done"
+        puts "    init done"
         exit
       end
 
@@ -311,6 +311,15 @@ module Railroadmap
         puts "Step #{$step_count}: Parse the application and generate a navigation model"
         $step_count += 1
 
+        if $route_map.nil?
+          print "\e[31m"  # red
+          puts "It seems init process was fails. please try again."
+          puts " $ rm railroadmap/abstraction.rb"
+          puts " $ railroadmap init -y"
+          print "\e[0m" # reset
+          exit
+        end
+
         # $route_map => $path2id
         # add XXX_url, XXX_path, @XXXX
         # $path2id will be provided by railroadmap/abstract.rb
@@ -346,6 +355,28 @@ module Railroadmap
           if $authentication == 'devise'
             require 'railroadmap/rails/devise'
             $authentication_module = Rails::Devise.new
+
+            # TODO: add devise path, => set by conf
+            $path2id['new_session_path']  = 'C_devise:session#new'    # user_session
+            $path2id['new_password_path'] = 'C_devise:password#new'  # user_password
+            $path2id['new_registration_path']   = 'C_devise:registration#new'  # user_registration
+            $path2id['edit_registration_path']   = 'C_devise:registration#edit'
+
+            $path2id['edit_password_url']   = 'C_devise:password#edit'
+
+            # TODO: tentative
+            $path2id['after_sign_out_path_for']   = 'C_devise:session#new'
+            $path2id['after_unlock_path_for']   = 'C_devise:session#new'
+            $path2id['after_omniauth_failure_path_for']   = 'C_devise:session#new'
+            $path2id['after_confirmation_path_for']   = 'C_devise:session#new'
+            $path2id['omniauth_authorize_path']   = 'C_devise:session#new'
+            $path2id['new_confirmation_path']   = 'C_devise:session#new'
+            $path2id['confirmation_url']   = 'C_devise:session#new'
+            $path2id['new_unlock_path']   = 'C_devise:session#new'
+            $path2id['unlock_url']   = 'C_devise:session#new'
+
+            # "Cancel my account", registration_path(resource_name, ), :data => {:confirm => "Are you sure?"}, :method => :delete,
+            $path2id['registration_path']   = 'C_devise:session#new'  # TODO: tentative
           elsif $authentication == 'authlogic'
             require 'railroadmap/rails/authlogic'
             $authentication_module = Rails::Authlogic.new
@@ -376,6 +407,17 @@ module Railroadmap
             # No auth
           else
             $log.error "unknown missing $authorization #{$authorization}"
+          end
+        end
+
+        # check path2id map provided by user
+        unless $app_path2id.nil?
+          $app_path2id.each do |k, v|
+            if $path2id[k].nil?
+              $path2id[k] = v
+            else
+              puts "$app_path2id[#{k}] = '#{v}' conflict"
+            end
           end
         end
 
@@ -460,6 +502,16 @@ module Railroadmap
         # refine transition
         $abst.complete_transition
 
+        # TODO: set guard filter flag?
+
+        # refine PEP
+        $authentication_module.compleate_pep_assignment
+        $authorization_module.compleate_pep_assignment
+
+        # DEBUG
+        $authentication_module.print_stat if $verbose > 0
+        $authorization_module.print_stat if $verbose > 0
+
         puts "    states         : #{$abst_states.size}"
         if $generate_all_trans
           puts "    transitions    : #{$abst_transitions.size}  (before_filter: #{$filter_added_trans_count})"
@@ -515,7 +567,7 @@ module Railroadmap
       # Command / Filter list
       #
       if options[:command]
-        if $verbose == 1
+        if $verbose > 0
           # stdout
           puts ""
           puts "==== Command ========================================== count === providedby ======== type ===== subtype == SF? = trans?==="
@@ -527,8 +579,17 @@ module Railroadmap
             if c.providedby == 'unknown'
               print "\e[31m"  # red
             end
-            # puts "#{k.ljust(50)} #{c.count.to_s.rjust(10)}  #{c.providedby.rjust(13)} #{c.type.rjust(13)} #{c.subtype.rjust(13)} #{c.is_sf.to_s.rjust(6)}  #{c.has_trans.to_s.rjust(6)}"
-            puts c.filenames if c.providedby == 'unknown'
+
+            type = c.type
+            type = 'unknown*' if type.nil?
+            subtype = c.subtype
+            subtype = 'unknown*' if subtype.nil?
+            sf = c.is_sf.to_s
+            sf = 'unknown*' if sf.nil?
+            trans = c.has_trans.to_s
+            trans = 'unknown*' if trans.nil?
+
+            puts "#{k.ljust(50)} #{c.count.to_s.rjust(10)}  #{c.providedby.rjust(13)} #{type.rjust(13)} #{subtype.rjust(13)} #{sf.rjust(6)}  #{trans.rjust(6)}"
             print "\e[0m" # reset color
           end
           puts ""
@@ -616,10 +677,11 @@ module Railroadmap
         sc = Rails::SecurityCheck.new
         sc.save_json(securitycheck_file)
         puts "    Security check(#{securitycheck_file}) was generated"
+
         $xss.trace_raw
         $warning.update_file2($approot_dir, '.')
 
-        if $warning.count > 0
+        if $warning.count > 0 || $verbose > 0
           # show Policy map
           # railroadmap/rails/requirement.rb
           $req.print_policy_assignment

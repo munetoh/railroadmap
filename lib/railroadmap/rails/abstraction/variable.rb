@@ -22,13 +22,13 @@ module Abstraction
           @model = ma[0].singularize
           @attribute = ma[1]
         else
-          $log.error "initialize() domain=#{domain} ma=#{ma} type=#{type}"
-          @model = nil
+          $log.debug "initialize() domain=#{domain} ma=#{ma} type=#{type}"
+          @model = domain
           @attribute = 'TBD'
         end
       else
         # !model
-        $log.error "initialize() domain=#{domain} ma=#{ma} type=#{type}"
+        $log.debug "initialize() domain=#{domain} ma=#{ma} type=#{type}"
         @model = domain
         @attribute = 'TBD'  # TODO
       end

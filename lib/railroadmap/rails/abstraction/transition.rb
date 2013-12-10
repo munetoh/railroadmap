@@ -50,6 +50,8 @@ module Abstraction
       @title = nil
       # text passed to next page
       @messages = nil
+      # tentative assignment by form_for
+      @tentative = false
       # Valid or Invalid?
       @invalid = false
       @invalid_type = ''
@@ -100,7 +102,7 @@ module Abstraction
     attr_accessor :index, :id, :filename, :count, :src_id, :dst_id, :dst_hint, :type, :subtype, :title, :messages, :block,
                   :origin,
                   :guard, :action, :guard_abst, :guard_add,
-                  :variables, :invalid, :invalid_type, :nav_error,
+                  :variables, :tentative, :invalid, :invalid_type, :nav_error,
                   #:authorization, :authorization_req,
                   :db_src, :db_dst, :db_type, :db_guard, :db_id,
                   :trace_count,

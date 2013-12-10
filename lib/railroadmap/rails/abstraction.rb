@@ -159,8 +159,8 @@ module Abstraction
     def load
       # TODO
       load_models
-      load_controllers
       load_views
+      load_controllers
     end
 
     # Models
@@ -196,7 +196,7 @@ module Abstraction
           # parse
           begin
             s = Abstraction::Parser::Model.new
-            s.load(mn, fn)
+            s.load(mn, m, fn)
           rescue => e
             p e
             pp e.backtrace
@@ -220,7 +220,7 @@ module Abstraction
           # parse
           begin
             s = Abstraction::Parser::Model.new
-            s.load(mn, fn)
+            s.load(mn, m, fn)
           rescue => e
             p e
             pp e.backtrace
@@ -382,148 +382,6 @@ module Abstraction
           end # DIRs  map
         end  # skip
       end  # loop
-    end
-
-    # return symbol
-    #  e.g.
-    #    code render action: 'edit'
-    #    get_assoc(sexp, action)  => edit
-    def get_assoc(sexp, symbol_name)
-      if sexp[0] == :args_add_block
-        if sexp[1][0][0].to_s == 'bare_assoc_hash'
-          h = sexp[1][0][1]
-          h.each  do |a|
-            if a[0] == :assoc_new && a[1][0] == :@label && a[1][1] == symbol_name + ':'
-              # Hit symbol
-              if a[2][0] == :string_literal && a[2][1][0] == :string_content && a[2][1][1][0] == :@tstring_content
-                value = a[2][1][1][1]
-              elsif a[2][0] == :symbol_literal && a[2][1][0] == :symbol && a[2][1][1][0] == :@ident
-                value = a[2][1][1][1]
-              else
-                $log.error "get_assoc() - TODO: symbol='#{symbol}' #{$filename}"
-                value = 'TBD'
-                pp a  # with $log.error
-                pp a[2][0]
-                pp a[2][1][0]
-                pp a[2][1][1][0]
-              end
-              return value
-            elsif a[1][1][0] == :symbol && a[1][1][1][1] == symbol_name
-              # Hit
-              if a[2][1][0] == :symbol
-                value = a[2][1][1][1]
-              elsif a[2][1][0] == :string_content && a[2][1][1][0] == :@tstring_content
-                #  render :action => "new"
-                value = a[2][1][1][1]
-              else
-                $log.error "get_assoc() - TODO"
-                pp a
-                value = 'TBD'
-                fail "DEBUG"
-              end
-              return value
-            end
-          end
-        elsif sexp[1][0][0].to_s == 'symbol_literal'
-          return sexp[1][0][1][1][1]
-        elsif sexp[1][0][0].to_s == 'string_literal'
-          return sexp[1][0][1][1][1]
-        else
-          $log.error "get_assoc() - TODO"
-        end
-      else
-        $log.error "get_assoc() - TODO"
-      end
-
-      $log.info "get_assoc(sexp, '#{symbol_name}') MISS JSON?"
-      nil
-    end
-
-    # assoc hash list => simple hash list
-    # example 1
-    # [:assoc_new,
-    #  [:symbol_literal, [:symbol, [:@ident, "method", [5, 54]]]],
-    #  [:string_literal, [:string_content, [:@tstring_content, "delete", [5, 63]]]]]
-    #  => {"method"=>"delete"}
-    def get_assoc_hash(sexp)
-      return nil if sexp.nil?
-      #  [:bare_assoc_hash,
-      #   [[:assoc_new,
-      #     [:@label, "method:", [17, 42]],
-      #     [:symbol_literal, [:symbol, [:@ident, "delete", [17, 51]]]]],  <====
-      #    [:assoc_new,
-      #     [:@label, "data:", [17, 59]],
-      #     [:hash,
-      #      [:assoclist_from_args,
-      #       [[:assoc_new,
-      #         [:@label, "confirm:", [17, 67]],
-      #         [:string_literal,
-      #          [:string_content,
-      #           [:@tstring_content, "Are you sure?", [17, 77]]]]]]]]]]]],
-      hash = {}
-      a = nil
-      if sexp[0].to_s == 'bare_assoc_hash'
-        a = sexp[1]
-      elsif sexp[0].to_s == 'hash' && sexp[1].nil?
-        $log.debug "get_assoc_hash ERROR unknwon syntax?"
-        return hash  # nul hash
-      elsif sexp[0].to_s == 'hash' && sexp[1][0].to_s == 'assoclist_from_args'
-        a = sexp[1][1]
-      else
-        $log.error "get_assoc_hash ERROR unknwon syntax?"
-        ruby_code = get_ruby(sexp)
-        puts "  filename : #{@filename} OR #{$filename}"
-        puts "  ruby code: #{ruby_code}"
-        puts "  sexp     :"
-        pp sexp # with $log.error
-      end
-
-      unless a.nil?
-        a.each do |an|
-          k = nil
-          v = nil
-          k = an[1][1][1][1] if an[1][0].to_s == 'symbol_literal'
-          v = an[2][1][1][1] if an[2][0].to_s == 'string_literal'
-          # ruby code: :remote => true
-          v = an[2][1][1] if an[2][0].to_s == 'var_ref'
-          # TODO: set ruby code for now
-          v = get_ruby(an[2][1]) if an[2][0].to_s == 'method_add_arg'
-          # ruby code: :columns => @report.columns
-          v = get_ruby(an[2][1]) if an[2][0].to_s == 'call'
-          # ruby code: :period => params[:period, ]
-          v = get_ruby(an[2][1]) if an[2][0].to_s == 'aref'
-          # ruby code: :set_filter => 1
-          v = an[2][1] if an[2][0].to_s == '@int'
-          # TODO: logic
-          # ruby code: :action => (entry.is_dir? ? "show" : "changes", )
-          v = get_ruby(an[2][1]) if an[2][0].to_s == 'paren'
-          # ruby code: :formats => [:html, ]
-          v = get_ruby(an[2][1]) if an[2][0].to_s == 'array'
-          k = an[1][1] if an[1][0].to_s == '@label'
-          v = an[2][1][1][1] if an[2][0].to_s == 'symbol_literal'
-
-          v = 'TBD' if an[2][0].to_s == 'hash'
-
-          if k.nil?
-            $log.error "get_assoc_hash ERROR unknown key"
-            ruby_code = get_ruby(an)
-            puts "  filename : #{@filename} OR #{$filename}"
-            puts "  ruby code: #{ruby_code}"
-            pp an # with $log.error
-          elsif v.nil?
-            $log.error "get_assoc_hash ERROR unknown value"
-            ruby_code = get_ruby(an)
-            puts "  filename : #{@filename} OR #{$filename}"
-            puts "  ruby code: #{ruby_code}"
-            pp an  # with $log.error
-            p an[2][0].to_s  # with $log.error
-            pp an[2][1][1]  # with $log.error
-          else
-            hash[k] = v
-          end
-        end
-      end
-      return hash
     end
 
     ###########################################################################
@@ -730,518 +588,78 @@ module Abstraction
       end # states
     end
 
-    # Transitions
-    # Complete
-    # TODO: gurad abstraction is done by state.compleate.condition => block.comp
+    # Complete Transitions
+    # v020 the destination id has been tempolary assigned by AST parser
+    #      here we check the id and fix if it was missing
     def complete_transition
-      fail "path to id table is nil" if @path2id.nil?
-      # for new trans
-      new_transitions = []
-      # for each Transitions
+      app_id2id_str = ''
       $abst_transitions.each do |n, trans|
         src = $abst_states[trans.src_id]
-        dom = src.domain.split('#')
-
-        # Check fix list and assign dst from sexp
-        src_label = trans.src_id + '[' + trans.count.to_s + ']'
-        fix = $map_fix_transitions[src_label] unless $map_fix_transitions.nil?
-        if !fix.nil?
-          # fix is defined by user
-          if fix[0]
-            puts "Fix transitions #{src_label}"
-            trans.dst_id = fix[1]
-            # type = fix[2]
-            trans.title = fix[3]
-            trans.comment = "set by $map_fix_transitions"
-          else
-            # no map -> igunored by user
-            puts "Ignore transitions #{src_label}"
-            trans.invalid = true
-            trans.invalid_type =  'by $map_fix_transitions'
-            trans.comment = "ignored by $map_fix_transitions"
-          end
-        elsif trans.dst_id.nil?
-          # fix is NOT defined by user, but dest is unknown
-          destroy = false
-          sexp = trans.dst_hint
-          ruby_code = get_ruby(sexp)
-
-          begin
-            # TODO: use case
-            # View to Controller
-            if trans.type == 'link_to' || trans.type == 'button_to' || trans.type == 'get'
-              id = nil
-
-              if sexp.nil?
-                $log.debug "no hint"
-                trans.comment += "TODO: link_to without hint (ruby code)"
-              else
-                # Hint => dst
-                if !sexp[1].nil? && !sexp[1][1].nil? && !sexp[1][1][0].nil? && sexp[1][1][0].to_s == 'hash'
-                  title = 'TBD'
-                  # <%= link_to "", {:action => "remove_block", :block => block_name}, :method => 'post', :class => "close-icon" %>
-                elsif !sexp[1].nil? && !sexp[1][0].nil? && !sexp[1][0][1].nil? && !sexp[1][0][1][1].nil?
-                  #
-                  title = sexp[1][0][1][1][1]
-                elsif !sexp[1].nil?
-                  ruby_code = get_ruby(sexp[1])
-                  $log.error "link_to #{ruby_code}"
-                  p trans.filename
-                  pp sexp # with $log.error
-                else
-                  ruby_code = get_ruby(sexp)
-                  $log.error "link_to #{ruby_code}"
-                  p trans.filename
-                  pp sexp  # with $log.error
-                end
-
-                if sexp[1][1].nil?
-                  $log.debug "complete_transition(), unknown path"
-                  path = "unknown"
-                  trans.comment += "TODO: unknown link_to path CODE(#{ruby_code}"
-                elsif sexp[1][1][0].to_s == 'hash'
-                  # link_to label, path, option
-                  #   http://railsdoc.com/references/link_to
-                  #
-                  # example
-                  # l(:label_search, ), {:controller => "search", :action => "index", :id => @project}, :accesskey => accesskey(:search, ),
-                  # <%= link_to
-                  #     l(:label_search),
-                  #     {:controller => 'search', :action => 'index', :id => @project},
-                  #     :accesskey => accesskey(:search) %>:
-                  #
-                  assoc_hash = get_assoc_hash(sexp[1][1])
-                  controller = nil
-                  action = nil
-                  path = "unknown"
-                  if !assoc_hash['controller'].nil? && !assoc_hash['action'].nil?
-                    controller = assoc_hash['controller']
-                    action     = assoc_hash['action']
-                    id = 'C_' + controller + '#_' + action
-                  elsif assoc_hash['controller'].nil? && !assoc_hash['action'].nil?
-                    # trans to same domain?
-                    controller = dom[0]
-                    action     = assoc_hash['action']
-                    id = 'C_' + controller + '#_' + action
-                  else
-                    # see Dashboard->Navigation model->Transitions
-                    $log.debug "complete_transition(), hash => unknown path,  #{trans.src_id} => ???"
-                  end
-                elsif sexp[1][1][1][0].to_s == '@ident'
-                  path = sexp[1][1][1][1]
-                  # <%= link_to 'Destroy', article, method: :delete, data: { confirm: 'Are you sure?' } %>
-                  # link_to "Destroy", comment, method: => :delete, data: => {confirm: => "Are you sure?"}, )
-                  if !sexp[1][2].nil? && !sexp[1][2][0].nil?
-                    hash = get_assoc_hash(sexp[1][2])
-                    if hash['method'] == 'delete'
-                      destroy = true
-                    elsif hash['method:'] == 'delete'
-                      # should  trans to destroy
-                      destroy = true
-                    end
-                  end
-                elsif sexp[1][1][1][0].to_s == '@ivar'
-                  # link_to("Destroy", @task, :confirm => "Are you sure?", :method => :delete)
-                  # TODO: confirm => condition,  with confirm("Are you sure?")
-                  # check assoc_hash
-                  hash = get_assoc_hash(sexp[1][2])
-                  if hash.nil?
-                    path = sexp[1][1][1][1]
-                  elsif hash['method'] == 'delete'
-                    # should  trans to destroy
-                    path = sexp[1][1][1][1]
-                    destroy = true
-                  else
-                    $log.debug "complete_transition @iver unknown method?"
-                    fail "complete_transition @iver unknown method?" if $robust
-                  end
-                elsif sexp[1][1][1][0].to_s == 'fcall'
-                  path = sexp[1][1][1][1][1]
-                  hash = get_assoc_hash(sexp[1][2])
-                  if hash.nil?
-                    # path = sexp[1][1][1][1]
-                  elsif hash['method'] == 'delete'
-                    # should  trans to destroy
-                    destroy = true
-                  else
-                    $log.debug "complete_transition, fcall unknown method?"
-                    fail "complete_transition, fcall unknown method?"  if $robust
-                  end
-                elsif !sexp[1][1][1][1].nil?
-                  if sexp[1][1][1][1][0] == :@ident
-                    # <%= link_to "Back", :back %>
-                    path = sexp[1][1][1][1][1]
-                  end
-                else
-                  $log.debug "complete_transition - missing path"
-                end
-              end
-
-              if id.nil?
-                # lookup, path => id
-                id = @path2id[path]
-                if id.nil?
-                  $log.debug "complete_transition #{trans.id} #{trans.type} title=#{title}, path=#{path} is missing"
-                  if $debug
-                    trans.print
-                    pp sexp  # debug
-                  end
-                elsif destroy == true
-                  # re-map to destroy
-                  domain = id.split('#')
-                  id = domain[0] + '#destroy'
-                end
-              end
-              # raise "Unknown path #{path}" if id == nil
-              trans.dst_id = id
-              trans.title = title
-            elsif trans.type == 'render' || trans.type == 'render_with_scope'
-              # default is
-              id = nil # @path2id[path]
-              # view + render (embed sub page)
-              if src.type == 'view'
-                if sexp[0].to_s == 'args_add_block'
-                  if sexp[1][0][0].to_s == 'bare_assoc_hash'
-                    hash = get_assoc_hash(sexp[1][0])
-                    ruby_code = get_ruby(sexp)
-                    trans.comment += "CODE(#{ruby_code})"
-
-                    if !hash['partial'].nil?
-                      # TODO
-                      # <%= render :partial=>'/user_util_links' %>
-                      # /user_util_links => V_#_user_util_links
-                      # HAML = render partial: 'sidebar'
-                      # id = 'V_' + dom[0] + '#_' + hash['partial']
-                      file = hash['partial'].split('/')
-                      if file.size == 2
-                        id = 'V_' + file[0].singularize + '#_' + file[1]
-                      else
-                        id = 'V_' + dom[0] + '#_' + hash['partial']
-                      end
-                    elsif !hash['partial:'].nil?
-                      file = hash['partial:'].split('/')
-                      if file.size == 2
-                        id = 'V_' + file[0] + '#_' + file[1]
-                      else
-                        id = 'V_' + dom[0] + '#_' + hash['partial:']
-                      end
-                    elsif !hash['template'].nil?
-                      tmpl = hash['template'].split('/')
-                      id = 'V_' + tmpl[0].singularize + '#' + tmpl[1]
-                    elsif !hash['file'].nil?
-                      file = hash['file'].split('/')
-                      id = 'V_' + file[0].singularize + '#' + file[1]
-                    else
-                      # <%= solr_fname.parameterize %>"><%= render_document_show_field_label :field => solr_fname %>
-                      $log.error "complete_transition()  #{trans.src_id}  ->  ruby_code #{ruby_code} UNKNOWN"
-                      pp sexp
-                      pp hash
-                    end
-                    $log.debug "complete_transition #{trans.type}, #{hash} #{ruby_code} => #{id}"
-                  elsif sexp[1][0][0].to_s == 'string_literal' && sexp[1][0][1][0].to_s == 'string_content'
-                    # <%= render 'constraints', :localized_params=>session[:search] %>
-                    action =  sexp[1][0][1][1][1]
-                    action2 = action_code2file(dom[0], action)
-                    id = 'V_' + action2
-                  else
-                    $log.error "complete_transition() TODO"
-                  end
-                else
-                  $log.error "complete_transition() TODO"
-                  p trans.filename
-                  pp sexp # with $log.error
-                  fail "Unknown"
-                end
-              end # view
-
-              # controller + render
-              if src.type == 'controller'
-                action = get_assoc(sexp, 'action')
-                if action.nil?
-                  # TODO: handle other cases
-                  # Default C->V
-                  # id = 'V_' + dom[0] + '#' + dom[1]
-                  # 20130818 do not set dst_id for this
-                  id = nil
-                else
-                  id = 'V_' + dom[0] + '#' + action
-                end
-              end
-              trans.dst_id = id
-
-            elsif trans.type == 'redirect_to'
-              # init
-              path = nil
-              id   = nil
-              skip = false
-              if sexp.nil? || sexp == ''
-                # no dst hint
-                $log.debug "complete_transition() redirect_to, sexp is nil or null "
-                skip = true
-                trans.comment += "skip, no hint, CODE(#{ruby_code}) "
-              else
-                if sexp[0].to_s == 'args_add_block'
-                  if sexp[1][0].to_s == 'args_add_star'
-                    # redirect_to *args
-                    # TODO: Not support this
-                    $log.debug "complete_transition() - TODO:  not support redirect_to *arg"
-                    skip = true
-                    trans.comment += "skip, not supported AST CODE(#{ruby_code})"
-                  elsif sexp[1][0][0].to_s == 'symbol_literal'
-                    if sexp[1][0][1][0].to_s == 'symbol'
-                      if sexp[1][0][1][1][0].to_s == '@ident'
-                        # redirect_to :back
-                        path = sexp[1][0][1][1][1]
-                        id = @path2id[path]
-                      else
-                        $log.error "complete_transition() - TODO"
-                      end
-                    else
-                      $log.error "complete_transition() - TODO"
-                    end
-                  elsif sexp[1][0][0].to_s == 'var_ref'
-                    if sexp[1][0][1][0].to_s == '@ident'
-                      # redirect_to feedback_complete_path
-                      path = sexp[1][0][1][1]
-                      id = @path2id[path]
-                    elsif sexp[1][0][1][0].to_s == '@ivar'
-                      # redirect_to @comment, notice: 'Comment was successfully created.'
-                      # path = comment
-                      path = sexp[1][0][1][1]
-                      id = @path2id[path]
-                    else
-                      $log.error "complete_transition() - TODO:  sexp[1][0][1][0] = #{sexp[1][0][1][0]}"
-                    end
-                  elsif sexp[1][0][0].to_s == 'bare_assoc_hash'
-                    # hash
-                    $log.debug "complete_transition() - TODO:  bare_assoc_hash"
-                    assoc_hash = get_assoc_hash(sexp[1][0])
-                    if assoc_hash['action'].nil?
-                      $log.error "complete_transition() - TODO: #{ruby_code}"
-                    else
-                      #  redirect_to :action => "index"
-                      path = 'TBD'  # dummy
-                      id = 'C_' + dom[0] + '#' + assoc_hash['action']
-                    end
-                  elsif sexp[1][0][0].to_s == 'method_add_arg'
-                    if sexp[1][0][1][0].to_s == 'fcall'
-                      if sexp[1][0][1][1][0].to_s == '@ident'
-                        # redirect_to settings_path(:tab => 'notifications')
-                        # TODO: check arg?
-                        path = sexp[1][0][1][1][1]
-                        id = @path2id[path]
-                      else
-                        $log.error "complete_transition() - TODO"
-                      end
-                    elsif sexp[1][0][1][0].to_s == 'call' then
-                      # redirect_to params.update(:id => @page.title)
-                      # TODO: SKIP
-                      $log.debug "complete_transition() - TODO: call => skip"
-                      skip = true
-                      trans.comment += "skip CODE(#{ruby_code})"
-                    else
-                      $log.error "complete_transition() - TODO"
-                    end
-                  elsif sexp[1][0][0].to_s == 'ifop'
-                    # TODO: dst has choice => MUST BE two transitions
-                    # redirect_to(params[:continue] ? new_group_path : groups_path)
-                    #   new_group_path => C_group#new
-                    #   groups_path    => C_group#index
-                    if sexp[1][0][1][0].to_s == 'aref'
-                      # guard
-                      guard_hint =  sexp[1][0][1]
-                      guard_ruby = get_ruby(guard_hint)
-
-                      # trans 1
-                      if sexp[1][0][2][0].to_s == 'var_ref'
-                        # trans 1 (guard == true?)
-                        if sexp[1][0][2][1][0].to_s == '@ident'
-                          path = sexp[1][0][2][1][1]
-                          id = @path2id[path]
-                          # add guard
-                          if trans.guard_add.nil?
-                            trans.guard_add = guard_ruby + ' == true'
-                          else
-                            trans.guard_add = '(' + trans.guard_add + ') and (' + guard_ruby + ' == true)'
-                          end
-                          $log.debug "complete_transition() - TODO: trans 1  guard is #{trans.guard_add}"
-                        else
-                          $log.error "complete_transition() - TODO: ifop => unknown trans 1"
-                          pp sexp[1][0][2][1][0] # with $log.error
-                          pp sexp[1][0][2][1][1] # with $log.error
-                        end
-                        # trans2
-                        if sexp[1][0][3][0].to_s == 'var_ref'
-                          # trans2 (guard == false)
-                          if sexp[1][0][3][1][0].to_s == '@ident'
-                            path2 = sexp[1][0][3][1][1]
-                            id2 = @path2id[path2]
-                            # add trans
-                            p = Abstraction::Parser::AstParser.new
-                            trans2 = p.copy_transition(trans)
-                            trans2.dst_id = id2
-                            # add guard
-                            if trans2.guard_add.nil?
-                              trans2.guard_add = guard_ruby + ' == false'
-                            else
-                              trans2.guard_add = '(' + trans2.guard_add + ') and (' + guard_ruby + ' == false)'
-                            end
-                            trans2.comment += "duplicate from #{trans.id} due to conditional path. "
-                            # add
-                            new_transitions << trans2
-                          else
-                            $log.error "complete_transition() - TODO: ifop => bad trans 2"
-                          end
-                        else
-                          $log.error "complete_transition() - TODO: ifop => no trans 2"
-                        end
-                      else
-                        $log.error "complete_transition() - TODO: ifop => no trans 1"
-                      end
-                    else
-                      $log.error "complete_transition() - TODO: ifop => no guard"
-                    end
-                  elsif sexp[1][0][0].to_s == 'vcall'
-                    if sexp[1][0][1][0].to_s == '@ident'
-                      path = sexp[1][0][1][1]
-                    else
-                      $log.error "complete_transition() - TODO"
-                    end
-                  elsif sexp[1][0][0].to_s == 'string_literal'
-                    if sexp[1][0][1][0].to_s == 'string_content'
-                      # TODO:    sexp[1][0][1][1][0] == @tstring_content
-                      # URL text?
-                      url = sexp[1][0][1][1][1]
-                      path = 'root' if url == "/"
-                      $log.error "URL=#{url} =>  path=#{path} --- TODO"
-                    else
-                      $log.error "complete_transition() - TODO"
-                    end
-                  elsif sexp[1][0][0] == :binary
-                    # redirect_to request.referrer || root_path
-                    # Two path
-                    # if request.referrer != nil => request.referrer
-                    # else                       => root_path
-                    if sexp[1][0][1][0] == :call
-                      # $log.error "TODO"
-                      # pp sexp[1][0][1]
-                    end
-                    if sexp[1][0][3][0] == :vcall && sexp[1][0][3][1][0] == :@ident
-                      path = sexp[1][0][3][1][1]
-                    else
-                      $log.error "complete_transition() - TODO"
-                    end
-                  else
-                    $log.error "complete_transition() - TODO"
-                    pp sexp[1][0][0]
-                  end    #  sexp[1][0]
-
-                  unless sexp[1][1].nil?
-                    # TODO: notice => message
-                    # $log.error "complete_transition() - TODO: sexp[1][1] exist"
-                    if sexp[1][1][0].to_s == 'bare_assoc_hash'
-                      h = get_assoc_hash(sexp[1][1])
-                      h.each do |k, v|
-                        trans.add_message(k, v)
-                      end
-                    else
-                      $log.error "complete_transition() - TODO: sexp[1][1] exist"
-                      pp sexp[1][1]
-                      pp sexp[1]
-                      p ruby_code
-                    end
-                  end
-                elsif sexp[0][0] == :command
-                  # redirect_to edit_user_path @user
-                  if sexp[0][1][0] == :@ident
-                    path = sexp[0][1][1]
-                  else
-                    $log.error "complete_transition() TODO: command"
-                  end
-                else
-                  $log.error "complete_transition() TODO"
-                  p sexp[0]
-                end
-              end # if
-
-              if skip == false && path.nil?
-                # no dst path
-                $log.error "complete_transition() - path is nil, #{trans.id} #{trans.type} title=#{title}"
-                p trans.filename
-                ruby_code = get_ruby(sexp)
-                p ruby_code
-                pp sexp
-
-                fail "DEBUG missing path. check TODO: for an existance of unsupported expression."
-              elsif skip == false && id.nil?
-                if path == 'back'
-                  # redirect_to :back
-                  # TODO: Back
-                  $log.debug "complete_transition() - path is back"
-                  trans.comment += "TODO: skip 'back'"
-                else
-                  # path exist but no map to the dst id
-                  # redirect_to PATH => add manual translation to the map
-                  $log.debug "complete_transition() - id is nil, #{trans.id} #{trans.type} title=#{title}, path=#{path}"
-                  trans.comment += "use $map_fix_transitions to set the destination manually. '#{src_label}' = [DST, TYPE, LABEL]"
-                end
-              end
-              trans.dst_id = id
-            elsif trans.type == 'submit' || trans.type == 'post'
-              # V_hoge#hoge -> C_hoge#create
-              id = 'C_' + dom[0] + '#create'
-              trans.dst_id = id
-              # add CSRF hidden variable
-              if $protect_from_forgery
-                if trans.variables.size > 0
-                  trans.variables << 'csrf_token'
-                else
-                  # TODO: debug this
-                  $log.info "submit with no variable #{trans.id}"
-                end
-              end
-            else
-              fail "UNKNOWN type=#{trans.type}, HALT"
-            end # trans
-          rescue => e
-            $log.error "SEXP ERROR?"
-            p e
-            pp e.backtrace
-            rubycode = get_ruby(sexp)
-            p rubycode
-            pp sexp
-            raise e
-          end
+        if trans.dst_id.nil?
+          dst = nil
         else
-          # fix is NOT defined by user, and dest is known
-        end
+          dst = $abst_states[trans.dst_id]
+          if dst.nil?
+            # TODO: form_for submit has two temp trans
+            error_type  = 'transition with missing destination state'
+            conf        = "'#{trans.dst_id}' => { src_id: '#{trans.src_id}', dst_id: 'TODO', type: '#{trans.type}' }"
+            message     = "Distination is missing for transition id=#{trans.id}, from #{trans.src_id} to #{trans.dst_id}."
+            remidiation = "Fix or delete the transition. Please set $app_id2id at 'railroadmap/abstraction.rb'. e.g. #{conf}'"
+            app_id2id_comment = ''
+            if trans.tentative # trans generated by form_for
+              message = message + " Since the tool assign tentative destination for 'submit' in 'form_for'."
+              app_id2id_comment = '# form_for'
+            end
+            if !$app_id2id.nil? && !$app_id2id[trans.dst_id].nil? && $app_id2id[trans.dst_id][:type] ==  trans.type && $app_id2id[trans.dst_id][:src_id] == trans.src_id
+              # Hit
+              if $app_id2id[trans.dst_id][:dst_id].nil?
+                # Delete
+                trans.invalid = true
+                severity = 1
+                message     = "Fixed (invalid). => " + message
+              else
+                # Fix
+                old_id = trans.dst_id
+                trans.dst_id = $app_id2id[trans.dst_id][:dst_id]
+                if trans.dst_id.nil?  # bad conf
+                  severity = 2
+                  message     = "Bad $app_id2id. " + message
+                  remidiation = "Bad $app_id2id. " + remidiation
+                else
+                  severity = 1
+                  message  = "Fixed (#{old_id} => #{trans.dst_id}). => " + message
+                end
+              end
+            else  # no conf
+              severity = 2
+            end
 
-        # check
-        if trans.src_id == trans.dst_id
-          # Bad transition => invalid
-          $log.info "LOOP #{trans.type} #{trans.src_id}"
-          trans.invalid = true
-          trans.invalid_type =  'loop'
-          # V --render-> V loop
-          # something wrong
-          if src.type == 'view' && trans.type == 'render'
-            $log.error "View render view loop"
-            pp src.id
-            pp trans.filename
-            pp sexp
-            fail "View render view loop"
+            # add error msg
+            e = {}
+            e['error_type']  = error_type
+            e['message']     = message
+            e['remidiation'] = remidiation
+            e['severity']    = severity
+            $errors.add(e)
+
+            if severity > 1
+              app_id2id_str += "  #{conf}, #{app_id2id_comment}\n"
+            end
           end
-        end
-      end  # do
+        end # do
+      end # def
 
-      # add new trans
-      if new_transitions.length > 0
-        $log.debug "complete_transition() - #{new_transitions.length} new trans exist"
-        puts "    added #{new_transitions.length} transitions"
-        new_transitions.each do |t2|
-          t2.inc unless $abst_transitions[t2.id].nil?
-          $abst_transitions[t2.id] = t2
-        end
+      # Console out
+      if app_id2id_str != ''
+        print "\e[31m"  # red
+        puts "Destination is missing, please fix the transition by setting $app_id2id in railroadmap/abstraction.rb. e.g."
+        puts "---"
+        puts "# {BAD_DST_ID}  => { SRC_ID, DST_ID, type }"
+        puts "$app_id2id = {"
+        puts app_id2id_str
+        puts "}"
+        puts "---"
+        print "\e[0m" # reset
       end
     end
 

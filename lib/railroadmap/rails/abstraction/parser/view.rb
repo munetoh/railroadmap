@@ -95,6 +95,7 @@ module Abstraction
         $filename = filename
         $is_private   = false
         $is_protected = false
+        $form_target = nil # TODO
 
         $log.debug "load : #{modelname} #{filename}"
         # Model name, action
@@ -158,6 +159,7 @@ module Abstraction
         $filename = filename
         $is_private   = false
         $is_protected = false
+        $form_target = nil # TODO
 
         $log.debug "load haml: #{modelname} #{filename}"
         # Model name, action
@@ -200,26 +202,46 @@ module Abstraction
         # new View state
         add_state('view', n, @filename)
         $block_var = []
+
         # HAML ->  Ruby -> AST
-        @template = File.read(@filename)
-        @options = Haml::Options.new
-        @haml = Haml::Parser.new(@template, @options)
+        haml_code = File.read(@filename)
+        ruby_code = conv_haml2ruby(haml_code)
+
+        s = Ripper.sexp(ruby_code)
+        if s.nil?
+          $log.error "HAML no code #{@filename}"
+          fail "TODO:"
+        else
+          parse_sexp(0, s)
+        end
+      end
+
+      # HAML to Ruby
+      def conv_haml2ruby(haml_code)
+        begin
+          haml_version = Gem::Version.create(Haml::VERSION)
+        rescue
+          # Haml 3.X
+          raise "Sorry. Haml #{Haml::VERSION} is not supported. Update the Rails to 3.2"
+        end
+
+        # p haml_version
+        if haml_version > Gem::Version.create('4.0.0')
+          # Haml 4.X
+          @options = Haml::Options.new
+          @haml = Haml::Parser.new(haml_code, @options)
+        else
+          fail "Haml 3.X is not supported"
+          # @haml = Haml::Engine.new(@template)
+        end
+
         @haml2ruby = "# haml2ruby\n"
+
         @haml.parse
         @node = nil
         @indent = 0
         compile(@haml.root)
-
-        # Ruby -> AST
-        s = Ripper.sexp(@haml2ruby)
-        if s.nil?
-          $log.error "HAML no code #{@filename}"
-          pp @haml
-          puts @haml2ruby
-          fail "DEBUG"
-        else
-          parse_sexp(0, s)
-        end
+        return  @haml2ruby
       end
 
       # Haml compile
@@ -243,54 +265,62 @@ module Abstraction
 
         code = @node.value[:value]
         if @node.value[:parse] == true
-          haml2ruby("#{code}  # tag value #{@indent}")
+          haml2ruby_add("#{code}  # tag value #{@indent}")
         else
-          haml2ruby("# #{code}  # tag parse==false")
+          haml2ruby_add("# #{code}  # tag parse==false")
         end
 
         if block_given?
           @indent += 1
           yield
           @indent -= 1
-          haml2ruby(" end  # tag: #{code}") unless code.nil?
+          haml2ruby_add(" end  # tag: #{code}") unless code.nil?
         end
       end
 
       def compile_silent_script
         code = @node.value[:text]
-        haml2ruby("#{code}  # silent_script #{@indent}")
+        haml2ruby_add("#{code}  # silent_script #{@indent}")
         if block_given?
           @indent += 1
           yield
           @indent -= 1
-          haml2ruby(" end  # silent_script: #{code}")
+          haml2ruby_add(" end  # silent_script: #{code}")
         end
       end
 
       def compile_script
         code = @node.value[:text]
-        haml2ruby("#{code}  # script")
+        haml2ruby_add("#{code}  # script")
         if block_given?
           @indent += 1
           yield
           @indent -= 1
-          haml2ruby(" end  # script: #{code}")
+          haml2ruby_add(" end  # script: #{code}")
         end
       end
 
       def compile_haml_comment
-        haml2ruby("# haml_comment")
+        haml2ruby_add("# haml_comment")
       end
 
       def compile_plain
-        haml2ruby("# plain")
+        haml2ruby_add("# plain")
       end
 
       def compile_doctype
-        haml2ruby("# doctype")
+        haml2ruby_add("# doctype")
       end
 
-      def haml2ruby(code)
+      def compile_comment
+        haml2ruby_add("# comment")
+      end
+
+      def compile_filter
+        haml2ruby_add("# filter")
+      end
+
+      def haml2ruby_add(code)
         code = "# nil" if code.nil?
         indent = "  "
         indent = "    " if @indent == 1

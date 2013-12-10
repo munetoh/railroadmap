@@ -60,6 +60,8 @@ module Abstraction
       @origin         = 'unknown'  # Code/Auto/Manual
       @subtype        = 'code'  # code attack
 
+      @routed = nil
+
       # Set ID (=key)
       case @type
       when 'controller'
@@ -129,7 +131,7 @@ module Abstraction
                   :marks,
                   :before_filters,
                   :code_policy, :req_policies, :req_policy_id, :nav_error, :df_error,
-                  :gv_node, :gv_node2
+                  :gv_node, :gv_node2, :routed
 
     # cal this after parse the state to set the URL of C and V state
     def set_url
@@ -292,12 +294,14 @@ module Abstraction
     #   ------------------------------------------------
     #
     # this is object, so put subject and action here
-    def add_cancan(type, subject, action, object)
-      @cancan = {} if @cancan.nil?  # TODO: cancan
-      key = "#{type}:#{subject}:#{action}"
-      @cancan[key] = [type, subject, action]
-      $log.debug "add_cancan #{subject} #{action} #{object} => #{@cancan}"
-    end
+    # 20131109 obsolete
+    #
+    # def add_cancan(type, subject, action, object)
+    #  @cancan = {} if @cancan.nil?  # TODO: cancan
+    #  key = "#{type}:#{subject}:#{action}"
+    #  @cancan[key] = [type, subject, action]
+    #  $log.debug "add_cancan #{subject} #{action} #{object} => #{@cancan}"
+    # end
 
     # Setup for Dashboard
     #

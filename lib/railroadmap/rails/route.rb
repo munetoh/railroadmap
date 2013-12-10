@@ -8,7 +8,7 @@ module Rails
     end
 
     def get_routes(xDir)
-      puts "getRoutes"
+      # puts "getRoutes"
       # TODO: check rails version
       # NG v = Rails::VERSION::STRING
 

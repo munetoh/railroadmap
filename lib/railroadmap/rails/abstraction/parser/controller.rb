@@ -35,34 +35,50 @@ module Abstraction
       def parse_sexp(level, sexp)
         if sexp[0].class == Symbol
           symbol = sexp[0].to_s
-          case symbol
-          when 'class'
+          case sexp[0]
+          when :class
             return add_class(level, sexp, 'controller')
-          when 'def'
-            return add_def(level, sexp, 'action')
-          when 'command'
-            return add_command(level, sexp, 'controller')
-          when 'if'
-            return add_block(level, sexp, symbol)
-          when 'elsif'
-            return add_block(level, sexp, symbol)
-          when 'else'
-            return add_block(level, sexp, symbol)
-          when 'if_mod'
-            return add_block(level, sexp, symbol)
-          when 'method_add_block'
-            # clear possible flags
-            $respond_to = false
-            $has_transition = false if $has_transition != true  # TODO: BAD LOGIC to avoid sub  method_add_block
-            parse_sexp_common(level, sexp)
-
-            if $has_transition == false && $transition.nil?
-              dst_id = 'V_' + $state.domain
-              $transition = add_transition('render_def3', $state.id, dst_id, nil, $guard, @filename)
-              $has_transition = true
+          when :def # action
+            $has_transition_render = false
+            add_def(level, sexp, 'action')
+            if $state.is_private || $state.is_protected
+              # skip
+            elsif $state.routed
+              # skip
+            else
+              # active action
+              unless $has_transition_render
+                # add render if dest exist
+                dst_id = 'V_' + $state.domain
+                if $abst_states[dst_id].nil?
+                  # no dist
+                else
+                  $transition = add_transition('render_def4', $state.id, dst_id, nil, $guard, @filename)
+                  $has_transition = true
+                  $has_transition_render = true
+                  $log.debug "#{$state.id} => #{dst_id} render? 4 added"
+                end
+              end
             end
             return
-          when 'do_block'
+          when :command
+            return add_command(level, sexp, 'controller')
+          when :if
+            return add_block(level, sexp, symbol)
+          when :elsif
+            return add_block(level, sexp, symbol)
+          when :else
+            return add_block(level, sexp, symbol)
+          when :if_mod
+            return add_block(level, sexp, symbol)
+          when :unless # CANNOT support XX unless XX
+            return add_block(level, sexp, symbol)
+          when :method_add_block
+            # clear possible flags
+            $respond_to = false
+            parse_sexp_common(level, sexp)
+            return
+          when :do_block
             # add block_var
             # TODO
             pblock = $block
@@ -85,7 +101,7 @@ module Abstraction
             parse_sexp_common(level, sexp)
             $block = pblock
             return
-          when 'call'
+          when :call
             if !sexp[1].nil? && sexp[1][0].to_s == 'var_ref' && sexp[1][1][0].to_s == '@ident'
               var_ref         = sexp[1][1][1]
               ident           = sexp[3][1]
@@ -99,7 +115,7 @@ module Abstraction
               # Unknown
               # $log.error "unknown call"
             end
-          when 'vcall'  # from Ruby 1.9.3?
+          when :vcall  # from Ruby 1.9.3?
             if !sexp[1].nil? && sexp[1][0].to_s == 'var_ref' && sexp[1][1][0].to_s == '@ident'
               var_ref         = sexp[1][1][1]
               ident           = sexp[3][1]
@@ -116,9 +132,9 @@ module Abstraction
             else
               # Unknown
             end
-          when 'method_add_arg'
+          when :method_add_arg
             return add_method_add_arg(level, sexp, 'controller')
-          when 'var_ref'
+          when :var_ref
             # Until Ruby 1.9.2
             # TODO: add_var_ref()
             ident = sexp[1][1]
@@ -138,8 +154,23 @@ module Abstraction
       # ruby => AST => abst model
       def load(modelname, filename)
         @modelname = modelname
+        $modelname = modelname
         @filename = filename
         $filename = filename # as global
+
+        # get the actions from route table
+        # Hash  action: [type, state]
+        # type
+        #  0   routed
+        #  1   routed + code
+        #  2            code
+        $action_list = {}
+        $route_map.each do |k, v|
+          d0 = k.split('#')
+          model = d0[0]
+          action = d0[1]
+          $action_list[action] = [0, nil] if modelname == model
+        end
 
         @ruby = File.read(@filename)
         sexp  = Ripper.sexp(@ruby)
@@ -152,6 +183,38 @@ module Abstraction
 
         # parse
         parse_sexp(0, sexp)
+
+        # disclose omitted controllers
+        # check with routemap
+        $action_list.each do |k, v|
+          if v[0] == 0
+            # no code, omitted controller
+            # add state
+            domain = @modelname + '#' + k
+            dst_id = 'V_' + domain
+
+            if $abst_states[dst_id].nil?
+              # no V for C
+            else
+              # add state and trans
+              s = add_state('controller', domain, @filename)
+              unless s.nil?
+                # lookup before_filters for this states
+                fs =  get_filter_lists(k)
+                unless fs.nil?
+                  $log.debug "add_def() -  def #{k} - filter exist #{fs}"
+                  s.before_filters = fs
+                end
+                v[1] = s
+                s.routed = true
+                $transition = add_transition('render_def4', $state.id, dst_id, nil, $guard, @filename)
+              end
+            end
+          end
+        end
+
+        # Global filters => each action
+        $authorization_module.pep_assignment unless $authorization_module.nil?
       end
 
       # Dump
@@ -164,7 +227,7 @@ module Abstraction
             puts ''
           end
         end
-      end
+      end # def
     end
   end
 end

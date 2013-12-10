@@ -1,3 +1,8 @@
+=== 0.2.1 / 2013-12-08 (Seiji Munetoh)
+* commonization of 'form_for' type commands, include semantic_menu.
+* cleanup spec files
+* added error list, and update dashboard
+
 === 0.2.0 / 2013-11-04 (Seiji Munetoh)
 * changed code structure
 * new command library for common abstraction

@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+# TODO: support unless
 
 require 'ripper'
 
@@ -636,6 +637,7 @@ module Sorcerer
         src.resource(sexp[1].first)
       },
       :unless => lambda { |src, sexp|
+        # puts "TODO: use if/else instead of unless"
         src.emit("unless ")
         src.resource(sexp[1])
         src.emit(" then ")
@@ -644,6 +646,7 @@ module Sorcerer
         src.emit(" end")
       },
       :unless_mod => lambda { |src, sexp|
+        # puts "TODO: use if/else instead of unless"
         src.resource(sexp[2])
         src.emit(" unless ")
         src.resource(sexp[1])

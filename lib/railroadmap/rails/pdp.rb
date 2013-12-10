@@ -45,72 +45,88 @@ module Rails
     def get_command_list
       commands = {}
     end
-    # Obsolete
-    # return ACL table
-    def get_acls_old(table)
-      $log.debug "get_acls() TODO define"
 
-      # Typical ACL table,
-      h = {}
-      h['anon'] = ''
-      h['user'] = ''
-      h['admin'] = ''
-      table.each do |t|
-        h[t[0]] = t[1]
-      end
-      return h
+    #--------------------------------------------------------------------------
+    # Code side
+
+    # set PEP defined by class scope
+    def pep_assignment
     end
 
-    # Pass 1
-    # $assets level/categories => $abst_state
-    def setup4dashboard_assets
-      # level/categories definitions
-      count = 0
-      unless $assets.nil?
-        $assets.each do |domain, policy|
-          level    = policy['level']
-          category = policy['category']
-          if !level.nil? && !category.nil?
-            # Controller key
-            key = 'C_' + domain
-            s = $abst_states[key]
-            unless s.nil?
-              # Hit
-              s.level = level
-              s.category = category
-              count += 1
-            end
+    # set PEP defined by global scope
+    def compleate_pep_assignment
+      # puts "    Compleate PEP assignment is not yet supported by our '#{@name}' library"
+      # Transitions
+      # set V->C edge
+      $abst_transitions.each do |k, t|
+        src = $abst_states[t.src_id]
+        dst = $abst_states[t.dst_id]
+        if !src.nil? && !dst.nil?
+          if src.type == 'view' && dst.type == 'controller'
+            t.authorization_filter = t.block.get_authorization_filter
           end
         end
       end
-      puts "    load policy    : #{count} assets  (level/categories)"
     end
 
-    # Pass 2
-    # Dashboard
-    def setup4dashboard_roles
-      @unused_count = 0
+    # generate PDP (PDP code or seed,rb)
+    def generate_pdp(filename)
+      puts "    Generate PDP is not yet supported by our '#{@name}' library"
+    end
 
-      # Roles definitions  check existance
-      if @roles.nil?
-        # No
-        @roles = {}
-        if $roles.nil?
-          $log.error "TODO set roles"
-          fail "TODO"
-        else
-          set_roles_from_requirements
+    # print PDP/PEP stat
+    def print_stat
+      # commands
+      puts ""
+      puts "    #{@name} commands"
+      puts "                                  Command    count"
+      puts "  ------------------------------------------------------------------"
+      $abst_commands.each do |k, c|
+        # set color
+        if c.providedby == @name # 'cancan'
+          count = c.count.to_s
+          puts "  #{c.name.rjust(40)}  #{count.rjust(6)}"
         end
-      else
-        # already defined by ?
       end
+      puts "  ------------------------------------------------------------------"
 
-      # Prepare for Dashboard
-      # 1. Scan assets list
-      # 2. unused -> used if used
-      return @unused_count, @missing_role_count
+      # Controller
+      puts ""
+      puts "                                Controler    Authentication/Authorization"
+      puts "  ------------------------------------------------------------------"
+      $abst_states.each do |k, s|
+        if s.type == 'controller'
+          at = s.code_policy.is_authenticated.to_s
+          az = s.code_policy.is_authorized.to_s
+          azc = '' # comment
+          puts "  #{s.id.rjust(40)}  #{at.rjust(6)} #{az.rjust(6)} #{azc}"
+        end
+      end
+      puts "  ------------------------------------------------------------------"
+
+      # Transition
+      puts ""
+      puts "                                Transition    PEP"
+      puts "  ------------------------------------------------------------------"
+      $abst_transitions.each do |k, t|
+        atf = t.authentication_filter
+        azf = t.authorization_filter
+        if atf.nil? && azf.nil?
+          # SKIP
+        else
+          atfs = atf.to_s
+          azfs = ''
+          azfs = azf.name.to_s unless azf.nil?
+          puts "  #{t.id.rjust(40)}  #{atfs.rjust(6)} #{azfs.rjust(6)}"
+        end
+      end
+      puts "  ------------------------------------------------------------------"
+      # Dataflow
+      puts ""
     end
 
+    #--------------------------------------------------------------------------
+    # Requirements side
     # 20130807
     # Check Role vs Assets
     def set_roles_from_requirements
@@ -121,7 +137,9 @@ module Rails
         $log.error "Missing $roles"
       else
         $roles.each do |name, defs|
-          if is_unused_role?(name, defs['level'], defs['categories'])  # TODO
+          if defs.nil?
+            $log.error "no defs"
+          elsif is_unused_role?(name, defs['level'], defs['categories'])  # TODO
             defs['unused'] = true
             @unused_count += 1
           else
@@ -160,7 +178,8 @@ module Rails
       end
     end
 
-    # Check
+    #--------------------------------------------------------------------------
+    # PEP and Policy check
     #
     #   Roles              Assets
     #   level categories   level categories      level   categories
@@ -230,29 +249,56 @@ module Rails
       return true
     end
 
-    # Obsolete
-    # Dashboard
-    # unused array[subject, object] and count
-    def setup4dashboard_old
-      @unused_count = 0
-      @acl_table.each do |o, v1|
-        v1.each do |a, v2|
-          v2.each do |s, v3|
-            if v3 == 0
-              # this ACL is used in code.
-              @unused_table[s][o] = false
-            else
-              # this ACL is not used in the code
-              @unused_table[s][o] = true
-              @unused_count  += 1
+    #-------------------------------------------------
+    # dashboard
+    # Pass 1
+    # $assets level/categories => $abst_state
+    def setup4dashboard_assets
+      # level/categories definitions
+      count = 0
+      unless $assets.nil?
+        $assets.each do |domain, policy|
+          level    = policy['level']
+          category = policy['category']
+          if !level.nil? && !category.nil?
+            # Controller key
+            key = 'C_' + domain
+            s = $abst_states[key]
+            unless s.nil?
+              # Hit
+              s.level = level
+              s.category = category
+              count += 1
             end
           end
         end
       end
+      puts "    load policy    : #{count} assets  (level/categories)"
     end
 
-    def generate_pdp(filename)
-      puts "    Generate PDP is not yet supported by our '#{@name}' library"
+    # Pass 2
+    # Dashboard
+    def setup4dashboard_roles
+      @unused_count = 0
+
+      # Roles definitions  check existance
+      if @roles.nil?
+        # No
+        @roles = {}
+        if $roles.nil?
+          $log.error "TODO set roles"
+          fail "TODO"
+        else
+          set_roles_from_requirements
+        end
+      else
+        # already defined by ?
+      end
+
+      # Prepare for Dashboard
+      # 1. Scan assets list
+      # 2. unused -> used if used
+      return @unused_count, @missing_role_count
     end
   end # class
 end

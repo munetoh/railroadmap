@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
 # requirements
+#
+# 20131110 cleanup v010 code
 
 require "ruby-graphviz"
 
@@ -323,6 +325,7 @@ module Rails
       end
     end
 
+    # Policy propagation: Model -> Variables
     def propagate_policy_to_variables
 
       # TODO: DF has missing variable (= nit a model attribute)
@@ -398,6 +401,8 @@ module Rails
       # TODO
     end
 
+    # stdout policy assignment
+    # called from cli.rb
     def print_policy_assignment
       cwidth = $max_id_length
       puts "  Policy assignment"
@@ -406,11 +411,17 @@ module Rails
       puts " #{col0.rjust(cwidth)}   code  req"
       puts "  --------------------------------------------------------------"
       $abst_states.each do |k, s|
-        code_policy_stat = "pub"
-        if s.code_policy.exist?
-          # code_policy_stat = "set"
+        if s.routed == false
+          code_policy_stat = '---'
+        elsif s.code_policy.exist?
           if s.code_policy.is_authenticated == false
-            code_policy_stat = 'pub'
+            if s.code_policy.is_authorized == false
+              code_policy_stat = '__ '
+            elsif s.code_policy.is_authorized == true
+              code_policy_stat = '_A '
+            else
+              code_policy_stat = 'pub'
+            end
           elsif s.code_policy.is_authenticated == true
             if s.code_policy.is_authorized == false
               code_policy_stat = 'A_ '
@@ -419,7 +430,17 @@ module Rails
             else
               code_policy_stat = 'A_ '
             end
+          else
+            if s.code_policy.is_authorized == false
+              code_policy_stat = '?_ '
+            elsif s.code_policy.is_authorized == true
+              code_policy_stat = '?A '
+            else
+              code_policy_stat = 'pub'
+            end
           end
+        else
+          code_policy_stat = "pub"
         end
 
         req_policy_stat = s.req_policies.count.to_s
@@ -487,7 +508,7 @@ module Rails
           color = p.color
         end
 
-        if s.type == 'controller'
+        if s.type == 'controller' && s.routed
           s.gv_node = gc.add_nodes(s.id)
           s.gv_node[shape: 'doubleoctagon']
           s.gv_node[color: p.color] unless color.nil?
@@ -566,8 +587,6 @@ module Rails
             # line style
             #   normal: no guard
             #   dashed: guard
-            t.authentication_filter = t.block.get_authentication_filter
-            t.authorization_filter = t.block.get_authorization_filter
             if !t.authentication_filter.nil?
               e[style: 'dashed']
               e[label: t.block.abst_condition_success]
@@ -582,37 +601,166 @@ module Rails
       g.output(pdf: "railroadmap/policy.pdf")
     end
 
+    # Remediation
+    def print_sample_requirements_base_policies
+      model_list = {}
+
+      puts "---"
+      puts "$roles = {"
+      puts "  'admin' => { level: 10, color: '#BCA352', description: 'system admin'},"
+      puts "  'user'  => { level:  3, color: '#97A750', description: 'normal user'}"
+      puts "}"
+
+      puts "$assets_base_policies = {"
+
+      # authentication
+      if $authentication_module.nil?
+        puts "# no template for #{$authentication_module.name}"
+        puts ""
+      else
+        models = $authentication_module.print_sample_requirements_base_policies
+        models.each do |m|
+          model_list[m] = true
+        end
+        puts ""
+      end
+
+      # authorization
+      if $authorization_module.nil?
+        puts "  # no model for authorization #{$authorization_module.name}"
+        puts ""
+      else
+        models = $authorization_module.print_sample_requirements_base_policies
+        models.each do |m|
+          model_list[m] = true
+        end
+        puts ""
+      end
+
+      # models
+      puts "  # application models"
+      $abst_states.each do |k, s|
+        if s.type == 'model'
+          m = s.model
+          if model_list[m].nil?
+            puts "  '#{m}' => {  # #{s.model}"
+            # TODO: code_policy?
+            if s.code_policy.is_authenticated == true
+              puts "    is_authenticated: true,  # TODO: confirm"
+            elsif s.code_policy.is_authenticated == false
+              puts "    is_authenticated: false, # TODO: confirm"
+            else # NIL
+              puts "    is_authenticated: false, # TODO: clalify"
+            end
+
+            if s.code_policy.is_authorized == true
+              puts "    is_authorized: true,     # TODO: confirm"
+              acl = true
+            elsif s.code_policy.is_authorized == false
+              puts "    is_authorized: false,    # TODO: confirm"
+              acl = false
+            else # NIL
+              puts "    is_authorized: false,    # TODO: clalify"
+              acl = false
+            end
+
+            if acl
+              puts "    level: 3,  # user"
+              puts "    color: 'green'"
+              puts "    roles:  ["
+              puts "      { role: 'admin',  action: 'CRUD' },"
+              puts "      { role: 'user',   action: 'CRUD' } ]  # TODO: upate action"
+            else
+              puts "    # level: 3,  # user"
+              puts "    # color: 'green'"
+              puts "    # roles:  ["
+              puts "    #   { role: 'admin',  action: 'CRUD' },"
+              puts "    #   { role: 'user',   action: 'CRUD' } ]"
+            end
+            puts "  },"
+            puts ""
+          end
+        end
+      end
+
+      puts "}"
+      puts "---"
+    end
+
+    # Remediation
+    def print_sample_requirements_mask_policies
+      $log.error "TODO:"
+      controller_list = {}
+
+      puts "---"
+      puts "$assets_mask_policies = {"
+
+      # authentication
+      if $authentication_module.nil?
+        puts "# no template for #{$authentication_module.name}"
+        puts ""
+      else
+        controllers = $authentication_module.print_sample_requirements_mask_policies
+        controllers.each do |m|
+          controller_list[m] = true
+        end
+        puts ""
+      end
+
+      # authorization
+      if $authorization_module.nil?
+        puts "  # no model for authorization #{$authorization_module.name}"
+        puts ""
+      else
+        controllers = $authorization_module.print_sample_requirements_mask_policies
+        controllers.each do |m|
+          controller_list[m] = true
+        end
+        puts ""
+      end
+
+      puts "}"
+      puts "---"
+    end
+
     # Load requirements
+    #
+    # policy definitions
+    #   domain           target
+    #   ---------------------------
+    #   model            Model
+    #   ---------------------------
+    #   model#action     Class#Method = Domain
+    #   modelpage
+    #   model.attribute  Variables
+    #
     def load(requirements_req, requirements_file)
       require requirements_req
+
       $log.debug "loaded existing requirements file #{requirements_file}"
+      req_count = 0
+
       # Load/Inject Policy after model gen.
       if $assets_base_policies.nil?
         # $log.error "Please set $assets_base_policies={} in railroadmap/requirements.rb"
 
         print "\e[31m"  # red
         puts "    Please set $assets_base_policies={} in railroadmap/requirements.rb"
+        # add remidiations
+        print_sample_requirements_base_policies
         print "\e[0m" # reset
 
         $assets_base_policies = {}
       else
-        # policy definitions
-        #   domain           target
-        #   ---------------------------
-        #   model            Model
-        #   ---------------------------
-        #   model#action     Class#Method = Domain
-        #   modelpage
-        #   model.attribute  Variables
-        #
+        # load model policies
         $stat_policy_model_count = 0
         $stat_policy_model_na_count = 0
         # loop
         $assets_base_policies.each do |k, a|
           set_model_policy(k, a)
+          req_count += 1
         end
-        # Check model w/o policy
-        # => Remidiation
+        # Check model w/o policy => Remidiation
         check_models_wo_policy
       end
 
@@ -621,6 +769,7 @@ module Rails
         # $log.error "Please set $assets_mask_policies={} in railroadmap/requirements.rb"
         print "\e[31m"  # red
         puts "    Please set $assets_mask_policies={} in railroadmap/requirements.rb"
+        print_sample_requirements_mask_policies unless $assets_base_policies.nil?
         print "\e[0m" # reset
         $assets_mask_policies = {}
       else
@@ -629,19 +778,19 @@ module Rails
         # 2) req mask -> propagate  <== EASY?
         $assets_mask_policies.each do |k, a|
           set_cv_policy(k, a)
+          req_count += 1
         end
       end
+
+      puts "    requirments    : #{req_count} assets (provided by #{requirements_req})"
 
       # Model-> ALL Controller states
       propagate_policy
 
-      # Controller state -> View states
-      # DEBUG print all policies
-      # print_policy_assignment
-      # save to PDF
+      # policy propagation diagram, save to PDF
       print_policy_assignment_diagram
 
-      # check 1
+      # simple check 1
       if $authentication_module.nil?
         # no authentication module => RED
         print "\e[31m" # red
@@ -658,92 +807,7 @@ module Rails
         print "\e[0m"  # reset
       else
         puts "    authorizarion  : #{$authorization_module.name}"
-        if $ac_type != 'rbac'
-          puts "    ERROR - aplication using CanCan, set $ac_type to rbac"
-        end
       end
-
-      # TODO: move to requirements.rb
-      # check 2, req. vs. state prop
-      remidiation  = "Define public states. e.g. home, sign_in, and sign_up pages"
-      remidiation << "File: railroadmap/requirements.rb\n"
-      remidiation << "---\n"
-      remidiation << "$assets = {\n"
-      remidiation << "  #  From code\n"
-      level = 40
-      remidiation_count = 0
-      req_count = 0
-
-      # For all controller states check given assets list provided by railroadmap/requirements.rb
-      $abst_states.each do |n, s|
-        # Controller
-        if s.type == 'controller'
-          domain_name = "'#{s.domain}'"
-          # check existance
-          asset_req = nil # OLD $assets[s.domain]
-          if !asset_req.nil?
-            # Hit, check with assets[]
-            $log.debug "Rails:Requirement.load()  #{s.domain}"
-            req_count += 1
-
-            # 20130817 New code, just check the existance
-            # TODO: check inconsistency between PEP placemant and PDP definition
-            unless $authentication_module.nil?
-              # app uses Auth
-              if s.is_authenticated.nil?
-                if asset_req['authentication'] == 'no'
-                  s.authentication_comment += "no auth defined by req."
-                elsif asset_req['authentication'] == 'not_routed'
-                  s.authentication_comment += "no routes defined by req."
-                else
-                  s.req_error = true
-                  add_policy_remidiation(s.domain, 'authentication', 'no')
-                  add_policy_remidiation(s.domain, 'comment', 'remidiation(except)')
-                end
-              else
-                # TODO: check confrict?
-              end
-            end
-
-            if $authorization_module.nil?
-              $log.error "No authotization module for #{s.id}"
-            else
-              # app has PDP
-              if s.is_authenticated == true
-                # C has Authentication check
-                if asset_req['authorization'] == 'no'
-                  s.authorization_comment = "no authorization defined by req."
-                  if s.is_authorized
-                    $log.error "Confrict! policy say no, but code has PEP"
-                  end
-                  s.is_authorized = false
-                end
-              else
-                # No PDP/PEP
-              end
-            end
-          elsif !$asset_remediations[s.domain].nil?
-            $log.error "DEBUG $asset_remediations"
-            fail "DEBUG"
-          else # asset_req != nil
-            # MISS => Default => remidiation
-            if s.is_protected == true || s.is_private == true
-              # SKIP functions
-              $log.debug "No AA for protected and provate method #{s.id}, not routed"
-            else
-              # Auth
-            end
-          end
-        elsif s.type == 'view' then
-          # View
-          # supress Nav w/ authorization error
-          domain_name = "'#{s.domain}'"
-        else
-          # Model
-        end  # controller
-      end
-
-      puts "    requirments    : #{req_count} assets (provided by user)"
 
       # New
       print_policy_remidiation
@@ -762,24 +826,19 @@ module Rails
           # Version
           f.write "\n"
           f.write "# Type of Access Control. rbac\n"
-          f.write "$ac_type = 'rbac'\n"
+          # f.write "$ac_type = 'rbac' # TODO: update\n"
           f.write "\n"
-          f.write "$roles = {\n"
-          f.write "}\n"
-          f.write "$assets = {\n"
-          f.write "}\n"
+          f.write "# $roles = {\n"
+          f.write "# }\n"
+          f.write "# $assets_base_policies = {\n"  # TODO; rename to assets_model_policies
+          f.write "# }\n"
+          f.write "# $assets_mask_policies = {\n"  # TODO; rename to assets_controller_policies
+          f.write "# }\n"
           f.write "# EOF\n"
         end
       end
       # use dummy
-      # Set NULL
-      $ac_type = 'unknown'
-      # ROLE
-      $roles = ['anon']
-      # ACCOUNT
-      $users = { 'anon' => 'anon' }
-      # ASSET
-      $assets = { 'unknown' => ['anon', 'x'] }
+      # $ac_type = 'unknown'
     end
-  end
-end
+  end # class
+end # module

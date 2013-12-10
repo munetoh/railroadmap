@@ -1,16 +1,29 @@
+# -*- coding: UTF-8 -*-
+#  rspec --color spec/rails/abstraction/block_spec.rb
+
 require 'rubygems'
 require 'rspec'
 require 'pp'
 
 require 'railroadmap/rails/abstraction'
 
+# Logging
+require 'logger'
+$log = Logger.new(STDOUT)
+$log.level = Logger::ERROR
+$log.formatter = proc do |severity, datetime, progname, msg|
+  if severity == 'ERROR' || severity == 'INFO' || severity == 'DEBUG'
+    position = caller.at(4).sub(%r{.*/}, '').sub(%r{:in\s.*}, '')
+    "#{severity} #{position} #{msg}\n"
+  else
+    "#{severity} #{msg}\n"
+  end
+end
+
 # DEBUG
 # require 'tracer'
 # Tracer.on
 
-require 'logger'
-$log = Logger.new(STDOUT)
-$log.level = Logger::ERROR
 
 describe Abstraction::Block do
 
@@ -91,8 +104,7 @@ describe Abstraction::Block do
     guard2abst_byblk = Hash.new # TODO
     $block_root.complete_condition(nil, nil, guard2abst, guard2abst_byblk)
   end
-  
-  #
+
   it ": print" do
     if $verbose > 0 then
       puts ''
@@ -100,23 +112,20 @@ describe Abstraction::Block do
       $abst_variables.each do |n,v|
         v.print
       end
-    
       puts "Transitions"
       $abst_transitions.each do |n,v|
         v.print
       end
-      
       #$verbose = 2
       puts "Dataflows[#{$abst_dataflows.size}]"
       $abst_dataflows.each do |n,v|
         v.print
-      end  
-  
+      end
       puts "Blocks"
       $block_root.print(0)
-    end    
-  end  
-  
+    end
+  end
+
   #############################################################################
   # TEST 2
   # TFB app/controllers/users_controller.rb update
@@ -127,33 +136,32 @@ describe Abstraction::Block do
     $block2 = $block2_root  # set current block,  => root   
   end
 
-    
   it ": create child if block object" do
     ruby = "@user.update_attributes(params[:user])"
     sexp = Ripper::sexp(ruby)
     $block2 = $block2.add_child('if', sexp, nil)
-  end  
-  
+  end
+
   it ": create other else block object" do
     $block2.add('else', nil, nil)
-  end  
-  
+  end
+
   it ": complete condition" do
     guard2abst = Hash.new
     guard2abst['@user.update_attributes(params[:user]) == true'] = 'update == true'
     guard2abst_byblk = Hash.new # TODO
-    $block2_root.complete_condition(nil, nil, guard2abst,guard2abst_byblk)
+    $block2_root.complete_condition(nil, nil, guard2abst, guard2abst_byblk)
   end
 
   #
   it ": print BLOCK 2" do
-    if $verbose > 0 then
+    if $verbose > 0
       puts ""
       $verbose = 2
       puts "Blocks 2"
       $block2_root.print(0)
     end
-  end  
+  end
 
   #############################################################################
   # TEST 3
@@ -162,21 +170,21 @@ describe Abstraction::Block do
     $block3_root = Abstraction::Block.new
     $block3_root.type = 'root'
     $block3_root.id = 'C_user#destroy_R'
-    $block3 = $block3_root  # set current block,  => root   
+    $block3 = $block3_root  # set current block,  => root
   end
 
   it ": complete condition" do
     guard2abst = Hash.new
     guard2abst_byblk = Hash.new # TODO
-    $block3_root.complete_condition(nil, nil, guard2abst,guard2abst_byblk)
+    $block3_root.complete_condition(nil, nil, guard2abst, guard2abst_byblk)
   end
-  
+
   it ": print BLOCK 3" do
-    if $verbose > 0 then
+    if $verbose > 0
       puts ""
       $verbose = 2
       puts "Blocks 3"
       $block3_root.print(0)
     end
-  end  
+  end
 end

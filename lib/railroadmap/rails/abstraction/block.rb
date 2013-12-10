@@ -109,7 +109,7 @@ module Abstraction
     # Dataflow
     # hint is text  - TODO: or AST?
     def add_dataflow(src_id)
-      d = Abstraction::Dataflow.new('control', src_id, nil, @id, nil, nil)
+      d = Abstraction::Dataflow.new('control', 'block', src_id, nil, @id, nil, nil)
       d.inc unless $abst_dataflows[d.id].nil?
       $abst_dataflows[d.id] = d
       debug "add_dataflow control #{d.id}"

@@ -83,7 +83,7 @@ class Design
     $abst_states.each do |n, s|
       if s.type == 'controller'
         if s.is_private || s.is_protected
-          $log.error "Design.initialize() skip #{s.id}"
+          $log.debug "Design.initialize() skip #{s.id}"
         else
           @c_assets[n]     = s
           @c_assets_count += 1
@@ -380,6 +380,22 @@ class SecurityAssuranceModel
     end
   end
 
+  # E
+  def errors
+    if $errors.nil?
+      $log.error "No errors => check JSON?"
+      return []
+    else
+      $log.debug "errors #{$warning.count}"
+      # TODO: Array => Hash
+      return $errors.errors # Array
+    end
+  end
+
+  def errors_count
+    $errors.severity2_count + $errors.severity3_count
+  end
+
   # Brakeman
   def brakeman_warnings
     if $brakeman_warnings.nil?
@@ -425,11 +441,15 @@ class SecurityAssuranceModel
           tr_bgcolor    = '#ff7070' # RED
         elsif t.type == 'render'
           tr_bgcolor    = '#d0d0d0' # gray
+        elsif t.type == 'render_def1'
+          tr_bgcolor    = '#d0d0d0' # gray
         elsif t.type == 'render_def2'
           tr_bgcolor    = '#d0d0d0' # gray
         elsif t.type == 'render_with_scope'
           tr_bgcolor    = '#d0d0d0' # gray
         elsif t.type == 'render_def3'
+          tr_bgcolor    = '#d0d0d0' # gray
+        elsif t.type == 'render_def4'   # implicit action
           tr_bgcolor    = '#d0d0d0' # gray
         elsif t.type == 'button_to'
           tr_bgcolor    = '#ff7070' # RED
@@ -516,10 +536,10 @@ class SecurityAssuranceModel
         t.db_guard = guard
         t.db_id = t.index
 
-        t.db_src_policy = "s#{src.code_policy.level},c#{src.code_policy.category}" unless src.code_policy.level.nil?
+        t.db_src_policy = "Lv:#{src.code_policy.level}" unless src.code_policy.level.nil?
 
         if !dst.nil? && !dst.code_policy.level.nil?
-          t.db_dst_policy = "s#{dst.code_policy.level},c#{dst.code_policy.category}"
+          t.db_dst_policy = "Lv:#{dst.code_policy.level}"
         else
           # $log.error "#{dst_id} Missing Policy"
         end
@@ -551,7 +571,7 @@ class SecurityAssuranceModel
           t.db_type = t.type
           t.db_dst =  '(loop)'
         else
-          puts "invalid trans #{t.src_id} #{t.type} #{t.invalid_type}"
+          $log.debug "invalid trans #{t.src_id} #{t.type} #{t.invalid_type}"
           type = t.type + "(#{t.invalid_type})"
         end
         t.db_id = count

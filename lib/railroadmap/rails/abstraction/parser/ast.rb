@@ -4,10 +4,10 @@ require 'sorcerer'
 
 module Abstraction
   module Parser
+
     # Main parser <-> MVC
     class AstParser
       # Tracer.on
-      # TODO: move to AstPaeser
       def initialize
         @indent = ''
         @dsl = []
@@ -59,10 +59,11 @@ module Abstraction
           end
         end
 
-        s.filename    << filename  # TODO: not stacked?
+        s.filename     << filename  # TODO: not stacked?
         s.origin       = 'code'
         s.is_private   = $is_private
         s.is_protected = $is_protected
+
         s.controller_class = @controller_class
         s.base_controller_class = @base_controller_class
 
@@ -238,6 +239,9 @@ module Abstraction
         end
       end
 
+      #########################################################################
+      # sexp operations
+
       # AST -> hash
       # 2012-03-30
       # args_add_block
@@ -245,7 +249,7 @@ module Abstraction
       def get_hash(sexp)
         begin
           h = {}
-          if sexp[0].to_s == 'args_add_block'
+          if sexp[0] == :args_add_block
             a = sexp[1]
             a.each do |aa|
               if aa[0] == :symbol_literal
@@ -256,12 +260,16 @@ module Abstraction
                 v =  aa[1][0][2][1][1][1]
                 n = k + '=>' + v
                 h[n] = true
+              elsif aa[0] == :var_ref
+                # SKIP
               else
-                $log.error "Unknown"
+                $log.error "Unknown #{aa[0]}"
                 p aa # with $log.error
                 fail "Unknown"
               end
             end
+          else
+            $log.error "get_hash() sexp[0] != :args_add_block"
           end
           h
         rescue
@@ -271,23 +279,303 @@ module Abstraction
         end
       end
 
-      # get_assoc_hash
-      # Get assoc => value
-      def get_assoc_hash(assoc, sexp)
+      # return symbol
+      #  e.g.
+      #    code render action: 'edit'
+      #    get_assoc(sexp, action)  => edit
+      def get_assoc(sexp, symbol_name)
+        if sexp[0] == :args_add_block
+          if sexp[1][0][0].to_s == 'bare_assoc_hash'
+            h = sexp[1][0][1]
+            h.each  do |a|
+              if a[0] == :assoc_new && a[1][0] == :@label && a[1][1] == symbol_name + ':'
+                # Hit symbol
+                if a[2][0] == :string_literal && a[2][1][0] == :string_content && a[2][1][1][0] == :@tstring_content
+                  value = a[2][1][1][1]
+                elsif a[2][0] == :symbol_literal && a[2][1][0] == :symbol && a[2][1][1][0] == :@ident
+                  value = a[2][1][1][1]
+                else
+                  $log.error "get_assoc() - TODO: symbol='#{symbol}' #{$filename}"
+                  value = 'TBD'
+                  pp a  # with $log.error
+                  pp a[2][0]
+                  pp a[2][1][0]
+                  pp a[2][1][1][0]
+                end
+                return value
+              elsif a[1][1][0] == :symbol && a[1][1][1][1] == symbol_name
+                # Hit
+                if a[2][1][0] == :symbol
+                  value = a[2][1][1][1]
+                elsif a[2][1][0] == :string_content && a[2][1][1][0] == :@tstring_content
+                  #  render :action => "new"
+                  value = a[2][1][1][1]
+                else
+                  $log.error "get_assoc() - TODO"
+                  pp a
+                  value = 'TBD'
+                  fail "DEBUG"
+                end
+                return value
+              end
+            end
+          elsif sexp[1][0][0].to_s == 'symbol_literal'
+            return sexp[1][0][1][1][1]
+          elsif sexp[1][0][0].to_s == 'string_literal'
+            return sexp[1][0][1][1][1]
+          else
+            $log.error "get_assoc() - TODO"
+          end
+        else
+          $log.error "get_assoc() - TODO"
+        end
+
+        $log.info "get_assoc(sexp, '#{symbol_name}') MISS JSON?"
+        nil
+      end
+
+      # :only => [:edit, :update, :destroy]
+      #  target    ^^^^^   ^^^^^^   ^^^^^^^
+      def get_assoc_hash_list(target, sexp)
         h = {}
         if sexp[0].to_s == 'assoc_new'
-          if sexp[1][1][1][1] == assoc
+          if sexp[1][1][1][1] == target
             # Hit
             a = sexp[2][1]
             a.each do |aa|
               n = aa[1][1][1]
               h[n] = true
-            end
-          end
-        end
+             end
+           end
+         end
         h
       end
 
+      # assoc hash list => simple hash list
+      # example 1
+      # [:assoc_new,
+      #  [:symbol_literal, [:symbol, [:@ident, "method", [5, 54]]]],
+      #  [:string_literal, [:string_content, [:@tstring_content, "delete", [5, 63]]]]]
+      #  => {"method"=>["delete", SEXP]}
+      def get_assoc_hash(sexp)
+        return nil if sexp.nil?
+        #  [:bare_assoc_hash,
+        #   [[:assoc_new,
+        #     [:@label, "method:", [17, 42]],
+        #     [:symbol_literal, [:symbol, [:@ident, "delete", [17, 51]]]]],  <====
+        #    [:assoc_new,
+        #     [:@label, "data:", [17, 59]],
+        #     [:hash,
+        #      [:assoclist_from_args,
+        #       [[:assoc_new,
+        #         [:@label, "confirm:", [17, 67]],
+        #         [:string_literal,
+        #          [:string_content,
+        #           [:@tstring_content, "Are you sure?", [17, 77]]]]]]]]]]]],
+        hash = {}
+        a = nil
+        if sexp[0] == :bare_assoc_hash
+          a = sexp[1]
+        elsif sexp[0] == :hash && sexp[1].nil?
+          $log.debug "get_assoc_hash ERROR unknwon syntax?"
+          return hash  # nul hash
+        elsif sexp[0] == :hash && sexp[1][0] == :assoclist_from_args
+          a = sexp[1][1]
+        else
+          $log.error "get_assoc_hash ERROR unknwon syntax?"
+          ruby_code = get_ruby(sexp)
+          puts "  filename : #{@filename} OR #{$filename}"
+          puts "  ruby code: #{ruby_code}"
+          puts "  sexp     :"
+          pp sexp # with $log.error
+        end
+
+        unless a.nil?
+          a.each do |an|
+            k = nil
+            v = nil
+            k = an[1][1][1][1] if an[1][0] == :symbol_literal
+            v = an[2][1][1][1] if an[2][0] == :string_literal
+            # ruby code: :remote => true
+            v = an[2][1][1] if an[2][0] == :var_ref
+            # TODO: set ruby code for now
+            v = get_ruby(an[2][1]) if an[2][0] == :method_add_arg
+            # ruby code: :columns => @report.columns
+            v = get_ruby(an[2][1]) if an[2][0] == :call
+            # ruby code: :period => params[:period, ]
+            v = get_ruby(an[2][1]) if an[2][0] == :aref
+            # ruby code: :set_filter => 1
+            v = an[2][1] if an[2][0].to_s == '@int'
+            # TODO: logic
+            # ruby code: :action => (entry.is_dir? ? "show" : "changes", )
+            v = get_ruby(an[2][1]) if an[2][0] == :paren
+            # ruby code: :formats => [:html, ]
+            v = get_ruby(an[2][1]) if an[2][0] == :array
+            k = an[1][1] if an[1][0] == :@label
+            v = an[2][1][1][1] if an[2][0] == :symbol_literal
+
+            v = 'TBD' if an[2][0] == :hash
+            v = an[2][1][1] if an[2][0] == :vcall && an[2][1][0] == :@ident
+
+            if k.nil?
+              $log.error "get_assoc_hash ERROR unknown key"
+              ruby_code = get_ruby(an)
+              puts "  filename : #{@filename} OR #{$filename}"
+              puts "  ruby code: #{ruby_code}"
+              pp an # with $log.error
+              fail "TODO: cannot set the key"
+            elsif v.nil?
+              $log.debug "get_assoc_hash ERROR unknown value"
+            else
+              hash[k] = [v, an[2]]
+            end
+          end
+        end
+        return hash
+      end
+
+      # var
+      def get_args_add_block(sexp)
+        # pp sexp
+        return sexp[1] if sexp[0] == :args_add_block
+        sexp.each do |s|
+          return s[1] if s[0] == :args_add_block
+        end
+        return nil
+      end
+
+      def get_var(sexp)
+        sexp.each do |s|
+          # [:symbol_literal, [:symbol, [:@ident, "email", [3, 15]]]],
+          return s[1][1][1] if s[0] == :symbol_literal && s[1][0] == :symbol && s[1][1][0] == :@ident
+        end
+        return nil
+      end
+
+      # get variable
+      # var_ref => S_model#att
+      def get_variable(sexp)
+        state = false
+        id = nil
+        hint = nil
+
+        if sexp[1][1][0].to_s == '@ivar'   # is this Model?
+          hint = Sorcerer.source(sexp)  # TODO: AST-> Ruby
+          model = sexp[1][1][1]
+          attribute = sexp[3][1]
+          if  attribute == 'each'
+            # TODO: this is do_block
+            $log.debug "TODO: this is do_block"  # TODO: this happen
+          else
+            # SRC _ID
+            state = true
+            id = "S_" + model.gsub('@', '') + "#" + attribute
+          end
+        elsif sexp[1][1][0].to_s == '@ident'   # is this variable of View erb?
+          hint = Sorcerer.source(sexp)
+          model = sexp[1][1][1]
+          attribute = sexp[3][1]
+          if  attribute == 'each'
+            # TODO: this is do_block
+            $log.debug "TODO: this is do_block"
+          else
+            # SRC _ID
+            state = true
+            id = "S_" + model.gsub('@', '') + "#" + attribute
+          end
+        elsif sexp[0].to_s == 'call' && sexp[1][0].to_s == 'var_ref' && sexp[3][0].to_s == '@ident'
+          # ruby code: User.current => s_user#current ?
+          hint  = Sorcerer.source(sexp)
+          model = sexp[1][1][1]
+          attribute = sexp[3][1]
+          # TODO: is this variable state?
+          state = true
+          id = "S_" + model.gsub('@', '') + "#" + attribute
+        else
+          $log.error "get_variable ERROR unknown variable"
+          ruby_code = get_ruby(sexp)
+          puts "  filename : #{$filename}"
+          puts "  ruby code: #{ruby_code}"
+          puts "  sexp     :"
+          pp sexp # with $log.error
+        end
+
+        return state, id, hint
+      end
+
+      # get variable
+      # var_ref => S_model#att
+      def get_variable2(sexp)
+        # init
+        state = false   # true -> Dataflow
+        id    = nil
+        hint  = Sorcerer.source(sexp)
+        todo  = false
+
+        if sexp[0] == :call
+          if sexp[1][0] == :var_ref
+            if sexp[1][1][0] == :@ivar && sexp[3][0] == :@ident
+              # @page.user
+              model  = sexp[1][1][1]
+              attrib = sexp[3][1]
+              state = true
+              id = "S_" + model.gsub('@', '') + "#" + attrib
+            elsif sexp[1][1][0] == :@ident && sexp[3][0] == :@ident
+              # role.description
+              model  = sexp[1][1][1]
+              attrib = sexp[3][1]
+              state = true
+              id = "S_" + model.gsub('@', '') + "#" + attrib
+            else
+              # Role.all
+              $log.info "get_variable2() TODO"
+            end
+          elsif sexp[1][0] == :vcall
+            if sexp[1][1][0] == :@ident && sexp[3][0] == :@ident
+              # current_user.name
+              model  = sexp[1][1][1]
+              attrib = sexp[3][1]
+              state = true
+              id = "S_" + model.gsub('@', '') + "#" + attrib
+            else
+              $log.info "get_variable2() TODO"
+              todo = true
+            end
+          elsif sexp[1][0] == :call
+            if sexp[1][1][0] == :var_ref && sexp[1][3][0] == :@ident && sexp[3][0] == :@ident
+              #  @page.user.name  = page -> user#name
+              pmodel = sexp[1][1][1][1]
+              model  = sexp[1][3][1]
+              attrib = sexp[3][1]
+              state = true
+              id = "S_" + model.gsub('@', '') + "#" + attrib
+            elsif sexp[1][1][0] == :vcall && sexp[1][3][0] == :@ident && sexp[3][0] == :@ident
+              #  current_user.role.name  = current_user -> user#name
+              pmodel = sexp[1][1][1][1]
+              model  = sexp[1][3][1]
+              attrib = sexp[3][1]
+              state = true
+              id = "S_" + model.gsub('@', '') + "#" + attrib
+            else
+              $log.info "get_variable2() TODO"
+            end
+          else
+            # role.users.map(, &:name).join
+            $log.info "get_variable2() TODO"
+          end
+        else
+          $log.info "get_variable2() TODO"
+          todo = true
+        end
+
+        if todo
+          $log.error "get_variable2() TODO: #{$filename}"
+          pp sexp
+          p hint
+        end
+
+        return state, id, hint, model, attrib
+      end
       #########################################################################
       # Add class, model, controller
       # level
@@ -453,6 +741,7 @@ module Abstraction
         # Clear condition
         $guard = nil
         $condition_level = -1
+
         # Code => Abs Obj
         # controller:action => state
         if type == 'action'
@@ -474,7 +763,7 @@ module Abstraction
             end
           else
             # def => state
-            # TODO: ?
+            # Add state
             domain = @modelname + '#' + @def_name
             s = add_state('controller', domain, @filename)
             unless s.nil?
@@ -484,6 +773,17 @@ module Abstraction
               unless fs.nil?
                 $log.debug "add_def() -  def #{name} - filter exist #{fs}"
                 s.before_filters = fs
+              end
+
+              # check action_list of this class
+              if $action_list[@def_name].nil?
+                # missing at routes => Skip
+                $action_list[@def_name] = [2, nil]
+                s.routed = false
+              else
+                # Hit
+                $action_list[@def_name] = [1, s]
+                s.routed = true
               end
             end
           end
@@ -543,12 +843,21 @@ module Abstraction
             $guard = 'not ' + $guard
           end
           parse_sexp_common(level, sexp)
+        elsif type == 'unless'
+          pblock = $block  # push current block
+          $block = $block.add_child('unless', sexp[1], nil) # add child block to current block
+          $guard = 'not (' + get_ruby(sexp[1]) + ')'
+          $guard_sexp = sexp[1]
+          parse_sexp_common(level, sexp)
+          $block = pblock
         else
           fail "ERROR add_block UNKNOWN #{type} #{$guard}"
         end
       end
 
       #########################################################################
+      # Command list
+
       # Add command list
       # comand hash => $abst_commands[k]
       # TODO: cleanup
@@ -578,6 +887,7 @@ module Abstraction
               c = Abstraction::Command.new
               c.name = k
               c.type = type
+              c.subtype = v[:subtype] unless v[:subtype].nil?
               c.providedby = providedby
               c.status = 'TODO'
               $abst_commands[c.name] = c
@@ -589,59 +899,102 @@ module Abstraction
         end  # each
       end
 
-    def add_command_to_list(classobj)
-      if $abst_commands[classobj.name].nil?
-        $abst_commands[classobj.name] = classobj
-      else
-        # no def before
-        fail "'#{classobj.name}' already exist"
+      def add_command_to_list(classobj)
+        if $abst_commands[classobj.name].nil?
+          $abst_commands[classobj.name] = classobj
+        else
+          # no def before
+          fail "'#{classobj.name}' already exist"
+        end
       end
-    end
 
-     # redirect_to XX
-    def add_trans_command_to_list(name, subtype)
-      cc1 = Abstraction::Command.new
-      cc1.name       = name
-      cc1.type       = 'transition'
-      cc1.subtype    = subtype
-      cc1.has_trans  = true
-      cc1.providedby = 'rails'
-      cc1.status     = 'beta'
-      add_command_to_list(cc1)
-      return cc1
-    end
+       # redirect_to XX
+      def add_trans_command_to_list(name, subtype)
+        cc1 = Abstraction::Command.new
+        cc1.name       = name
+        cc1.type       = 'transition'
+        cc1.subtype    = subtype
+        cc1.has_trans  = true
+        cc1.providedby = 'rails'
+        cc1.status     = 'beta'
+        add_command_to_list(cc1)
+        return cc1
+      end
 
-    def add_dataflow_command_to_list(name, subtype, is_inbound, is_outbound)
-      c = Abstraction::Command.new
-      c.name         = name
-      c.type         = 'dataflow'
-      c.subtype      = subtype
-      c.has_dataflow = true
-      c.is_inbound   = is_inbound
-      c.is_outbound  = is_outbound
-      c.providedby   = 'rails'
-      c.status       = 'beta'
-      add_command_to_list(c)
-      return c
-    end
+      def add_dataflow_command_to_list(name, subtype, is_inbound, is_outbound)
+        c = Abstraction::Command.new
+        c.name         = name
+        c.type         = 'dataflow'
+        c.subtype      = subtype
+        c.has_dataflow = true
+        c.is_inbound   = is_inbound
+        c.is_outbound  = is_outbound
+        c.providedby   = 'rails'
+        c.status       = 'beta'
+        add_command_to_list(c)
+        return c
+      end
 
-    def add_todo_command_to_list(name, type)
-      c = Abstraction::Command.new
-      c.name = name
-      c.type = type
-      c.providedby = 'unknown'
-      c.status = 'todo'
-      add_command_to_list(c)
-      return c
-    end
+      def add_todo_command_to_list(name, type)
+        c = Abstraction::Command.new
+        c.name = name
+        c.type = type
+        c.providedby = 'unknown'
+        c.status = 'todo'
+        add_command_to_list(c)
+        return c
+      end
 
       #########################################################################
+      # Command
+
+      # Add command_call
+      # type : view
+      # ERB example
+      #   <%= f.text_field :title %>   <<<
+      #   <%= f.submit 'Switch Now' %>
+      #   => submit
+      def add_command_call(level, sexp, type)
+        var_ref = sexp[1][1][1]
+        name    = sexp[3][1]
+        var     = sexp[4][1][0][1][1][1]
+        sarg    = sexp[4]
+
+        command(level, sexp, type, name, sarg)
+        parse_sexp_common(level, sexp)
+      end
+
+      # Add command call
+      #
+      #  View
+      #    form_for
+      # sexp =
+      #   :method_add_arg,
+      #     :fcall
+      #     :arg_paren,
+      def add_fcall(level, sexp, type)
+        # get command name
+        name =  sexp[1][1][1] if sexp[1][1][0] == :@ident
+        cmd = $abst_commands[name]
+
+        if !cmd.nil? && cmd.type == 'input_dataflow'
+          var_ref = sexp[2][1]
+          var = nil
+          sarg = nil
+          command(level, sexp, type, name, sarg)
+        else
+          $log.info "AST - add_fcall type=#{type} name=#{name}"
+          parse_sexp_common(level, sexp)
+        end
+      end
+
       # Add command to Model
       # Code => AST => Command => Model
       # type : model, controller, view
       def add_command(level, sexp, type)
         name = sexp[1][1]
         sarg = sexp[2]
+
         command(level, sexp, type, name, sarg)
         parse_sexp_common(level, sexp)
       end
@@ -654,7 +1007,7 @@ module Abstraction
         parse_sexp_common(level, sexp)
       end
 
-      # Command
+      # process command
       def command(level, sexp, type, name, sarg)
         tdb = false
         unknown = false
@@ -675,8 +1028,6 @@ module Abstraction
         if $abst_commands[name].nil?
            # Unknown command
           $log.debug "TODO: command #{name} #{@filename} <==================== command"
-          $log.error "command() unknown command, '#{name}' #{@filename}"
-          pp sexp # with $log.error
 
           # add to list
           c = Abstraction::Command.new
@@ -689,18 +1040,91 @@ module Abstraction
           $unknown_command += 1
         else
           # Command HIT
+          cmd = $abst_commands[name]
+          get_form_for_target(sexp) if cmd.type == 'input_dataflow'
+
           # Add trans
-          if $abst_commands[name].has_trans
+          # Add trans
+          if cmd.subtype == 'post'
+            # submit
+            if !sexp[3].nil? && sexp[3][1] == 'submit'
+              add_trans_by_form_submit(sexp)
+            elsif !sexp[4].nil? && sexp[4][1][0][1][1][1] == 'submit'
+              # f.button :submit?
+              add_trans_by_form_submit(sexp)
+            else
+              add_transition_by_command(name, $state, $guard, sarg, @filename)
+            end
+          elsif cmd.has_trans
             add_transition_by_command(name, $state, $guard, sarg, @filename)
           end
 
           # Add dataflow
-          if $abst_commands[name].has_dataflow
+          if cmd.has_dataflow
             add_dataflow_by_command($abst_commands[name], $state, $guard, sarg, @filename)
           end
           # run abstract()
-          $abst_commands[name].abstract(sexp, sarg, @filename)
+          cmd.abstract(sexp, sarg, @filename)
         end # if
+      end
+
+      # get form_for target state path
+      def get_form_for_target(sexp)
+        $form_target_hint = nil
+
+        if sexp[1][0] == :fcall # :method_add_arg
+          s = sexp[2][1]  # :args_add_block
+        else
+          s = sexp[2]     # :args_add_block
+        end
+        if s.nil?
+          # semantic_menu?
+          $form_target = nil
+          return $form_target
+        end
+
+        if s[0] == :args_add_block
+          if s[1][0][0] == :var_ref && s[1][0][1][0] == :@ivar
+            # form_for @page do |f|
+            # [:args_add_block, [[:var_ref, [:@ivar, "@page", [2, 12]]]], false]]
+            target = s[1][0][1][1]
+            $form_target = target.gsub('@', '')
+
+            if !s[1][1].nil? && s[1][1][0] == :bare_assoc_hash
+              # form_for @user, :method => :put do |f|
+              $log.info "get_form_for_target() TODO: DATAFLOW method exist"
+            end
+          end
+          # @message, :url => mailer_path
+          #   url -> path -> id -> model
+          s[1].each do |s2|
+            if s2[0] == :bare_assoc_hash
+              h = get_assoc_hash(s2) # k => [v, sexp]
+              unless h['url'].nil?
+                path = h['url'][0]
+                if path.nil?
+                  $log.error "get_form_for_target() unknown url"
+                  $form_target_hint = h['url'][1] # SEXP
+                else
+                  id = $path2id[path]
+                  unless id.nil?
+                    s = $abst_states[id]
+                    if s.nil?
+                      $log.debug "get_form_for_target() #{id} => no state"
+                    else
+                      $form_target = s.model
+                    end
+                  end
+                end
+              end
+            end
+          end
+        else
+          # <%= form_for(resource, :as => resource_name, :url => confirmation_path(resource_name), :html => { :method => :post }) do |f| %>
+          $log.info "get_form_for_target() TODO: DATAFLOW #{filename} no target => set TBD"
+          $form_target = $state.model # TODO: use model name
+        end
+        return $form_target
       end
 
       # TODO: common def for :args_add_block
@@ -717,23 +1141,83 @@ module Abstraction
       end
 
       # TODO: => Manual def
-      def get_path(sexp)
+      def get_path(trans_type, sexp)
         # TODO: INV sexp == Array
         path = nil
         arg  = nil # TODO: set arg?
 
+        content_count = 0
         sexp.each do |s|
           if s[0] == :method_add_arg && s[1][0] == :fcall && s[1][1][0] == :@ident
-            path =  s[1][1][1]
-            return path, arg
+            # path =  s[1][1][1]
+            # return path, arg
+            if trans_type == 'link_to' || trans_type == 'button_to'
+              if content_count > 0
+                path =  s[1][1][1]
+                return path, arg
+              end
+            else
+              path =  s[1][1][1]
+              return path, arg
+            end
+          # Label
           elsif s[0] == :string_literal && s[1][0] == :string_content && s[1][1][0] == :@tstring_content
-            path =  s[1][1][1]
-            return path, arg
+            # Skip 1st tstring_content
+            #   link_to "HOGE"  path
+            #   link_to "HOGE" "path"
+            #   button_to "Cancel my account", registration_path(resource_name), :data => { :confirm => "Are you sure?" }, :method => :delete
+            # Else
+            # render 'form'
+            if trans_type == 'link_to' || trans_type == 'button_to'
+              if content_count > 0
+                path =  s[1][1][1]
+                return path, arg
+              end
+            else
+              path =  s[1][1][1]
+              return path, arg
+            end
           elsif s[0] == :var_ref && s[1][0] == :@ident
             path =  s[1][1]
             return path, arg
           elsif s[0] == :bare_assoc_hash
             # format.json { render json: @authorizationtype.errors, status: :unprocessable_entity }
+            # render :partial => "shared/ask"
+            #  => shared/_ask
+            # render :partial => "list", :collection => collection, :as => :question
+            #  => _list
+            if s[1][0][0] == :assoc_new
+              an = s[1][0]
+              an1 = an[1]
+              an2 = an[2]
+              ident = nil
+              tstring = nil
+              if an1[0] == :symbol_literal && an1[1][0] == :symbol && an1[1][1][0] == :@ident
+                ident = an1[1][1][1]
+              end
+
+              if an2[0] == :string_literal && an2[1][0] == :string_content && an2[1][1][0] == :@tstring_content
+                tstring = an2[1][1][1]
+              end
+
+              if ident == 'partial'
+                path = tstring
+                arg  = ident
+              elsif an1[1][1][1] == 'class'
+                # link_to resource.following.count, resource_path(resource) + "/following", :class => 'user-following'
+                #  => /users/:user_id/following  user_following
+                # TODO: use class
+                path = an2[1][1][1]
+              elsif an1[1][1][1] == 'layout'
+                path = an2[1][1][1]  # TODO: not a form
+                arg = 'layout'
+              else
+                # render :layout => "api"; end
+                # TODO: recoed as error
+                $log.info ":bare_assoc_hash '#{an1[1][1][1]}' =>  '#{an2[1][1][1]}'"
+              end
+
+            end
             return path, arg
           elsif s[0] == :symbol_literal && s[1][0] == :symbol && s[1][1][0] == :@ident
             # render :new
@@ -750,26 +1234,35 @@ module Abstraction
             # TODO: this generate two transitions
             # at this time, we select root_path
             $log.info "TODO: A || B"
-            path = s[3][1][1] if s[3][0] == :vcall && s[3][1][0] == :@ident
-            return path, arg
+            if s[3][0] == :vcall && s[3][1][0] == :@ident
+              path = s[3][1][1]
+              return path, arg
+            else
+               # $log.error ":binary SKIP #{content_count}"
+            end
           elsif s[0] == :call
             # link_to user.name, user
             #         ^^^^^^^^^SKIP
+            # $log.error ":call SKIP #{content_count}"
           elsif s[0] == :var_ref
             # render action: 'show', status: :created, location: @apptype
             # [:var_ref, [:@ivar, "@apptype", [33, 34]]]
             # SKIP
             # $log.error "get_path() TODO: #{$filename} "
             # pp s
+          elsif s[0] == :string_literal && s[1][0] == :string_content && s[1][1][0] == :string_embexpr
+            # link_to "#{program.author_username}/#{program.slug}", program
+            # TODO: => arg?
+          elsif s[0] == :aref && s[1][0] == :call && s[1][1][0] == :var_ref
+            # link_to lesson.metadata["title"], lesson_path(lesson.metadata["slug"])
           else
             $log.error "get_path() TODO: #{$filename} "
             pp sexp
             pp s
             fail "get_path() TODO: add rule"
           end
-        end
-        $log.error "get_path() TODO: #{$filename} "
-        pp sexp
+          content_count += 1
+        end # do
         return path, arg
       end
 
@@ -795,27 +1288,48 @@ module Abstraction
           elsif sarg[0] == :args_add_block
             # EX2  link_to "Sign in", new_session_path(resource_name)
             #       => path = edit_admin_role_path
-            label = get_label(sarg[1])
-            path, arg = get_path(sarg[1])
-            dst_id = $path2id[path]
+            label     = get_label(sarg[1])
+            path, arg = get_path(trans_type, sarg[1])
+            dst_id    = $path2id[path]
           else
             $log.error "TODO"
           end
 
-          # View and render => form
-          if src_state.type == 'view' && name == 'render'
+          # View, render => form
+          if src_state.type == 'view' && trans_type == 'render'
             # TODO: workaround for X and X/X, X/X is handled by later
             if path.nil?
-              $log.info "add_transition_by_command() path is nil"
+              $log.debug "add_transition_by_command() path is nil"
             else
               p = path.split('/')
-              dst_id = 'V_' +  src_state.model + "#_" + path if p.size == 1
-              $log.debug "add_transition_by_command() View and Render #{path} #{dst_id}"
+              dst_id = 'V_' +  src_state.model + "#_" + path  if p.size == 1
+              dst_id = 'V_' +  p[0].singularize + "#_" + p[1]             if p.size == 2
+              dst_id = 'V_' +  p[0].singularize + ':' + p[1].singularize + "#_" + p[2] if p.size == 3
+              $log.debug "add_transition_by_command() View and Render #{path}, #{p}, #{dst_id}"
             end
           end
 
-          # TODO: xml
+          # Controller, render => new edit
+          if src_state.type == 'controller' && trans_type == 'render' && dst_id.nil?
+            if path == 'new' || path == 'edit'
+              dst_id = 'V_'  +  src_state.model + "#" + path
+            elsif arg == 'layout'
+              dst_id = 'V_layout#' + path
+            else
+              # TODO: recored as error
+              $log.info "Unknown path=#{path}, C--render-->V  at #{src_state.id}"
+              # pp sarg
+              # render :status => 404, :text => "Not found. Authentication passthru."
+            end
+          end
+
+          if dst_id.nil?
+            # $log.error "#{src_state.id} type=#{trans_type}  path=#{path}, label=#{label},  => #{dst_id}"
+          end
+
+          # new transition
           $transition = add_transition(trans_type, src_state.id, dst_id, sarg, guard, filename)
+          $has_transition_render = true if trans_type == 'render'
         else
           # FORTH PATH
           trans_type = $abst_commands[name].subtype
@@ -824,24 +1338,6 @@ module Abstraction
           $transition = add_transition(trans_type, src_state.id, dst_id, nil, guard, filename)
           $log.debug "command #{name} Trans force to #{$abst_commands[name].transition_path} #{dst_id}"
         end
-      end
-
-      # var
-      def get_args_add_block(sexp)
-        # pp sexp
-        return sexp[1] if sexp[0] == :args_add_block
-        sexp.each do |s|
-          return s[1] if s[0] == :args_add_block
-        end
-        return nil
-      end
-
-      def get_var(sexp)
-        sexp.each do |s|
-          # [:symbol_literal, [:symbol, [:@ident, "email", [3, 15]]]],
-          return s[1][1][1] if s[0] == :symbol_literal && s[1][0] == :symbol && s[1][1][0] == :@ident
-        end
-        return nil
       end
 
       def add_dataflow_by_command(cmd, src_state, guard, sarg, filename)
@@ -856,8 +1352,7 @@ module Abstraction
           elsif cmd.name == 'javascript_include_tag'
             $log.debug "DATAFLOW SKIP $form_target=#{$form_target}"
           else
-            $log.error "DATAFLOW #{cmd.name}  state=#{src_state.id}, $form_target=#{$form_target}   #{filename}"
-            fail "DEBUG"
+            $log.debug "DATAFLOW #{cmd.name}  state=#{src_state.id}, $form_target=#{$form_target}   #{filename}"
           end
         else
           # HAML  = text_field_tag :section_name, '', class: 'input-xlarge', :placeholder => t('.new_section_placeholder')
@@ -928,147 +1423,6 @@ module Abstraction
         end
       end
 
-      # Add command_call
-      # type : view
-      # ERB example
-      #   <%= f.text_field :title %>   <<<
-      #   <%= f.submit 'Switch Now' %>
-      #   => submit
-      def add_command_call(level, sexp, type)
-        var_ref = sexp[1][1][1]
-        type = sexp[3][1]
-        var = sexp[4][1][0][1][1][1]
-        sarg = sexp[4]
-
-        command_call(level, sexp, var_ref, type, var, sarg)
-        parse_sexp_common(level, sexp)
-      end
-
-      # get variable
-      # var_ref => S_model#att
-      def get_variable(sexp)
-        state = false
-        id = nil
-        hint = nil
-
-        if sexp[1][1][0].to_s == '@ivar'   # is this Model?
-          hint = Sorcerer.source(sexp)  # TODO: AST-> Ruby
-          model = sexp[1][1][1]
-          attribute = sexp[3][1]
-          if  attribute == 'each'
-            # TODO: this is do_block
-            $log.debug "TODO: this is do_block"  # TODO: this happen
-          else
-            # SRC _ID
-            state = true
-            id = "S_" + model.gsub('@', '') + "#" + attribute
-          end
-        elsif sexp[1][1][0].to_s == '@ident'   # is this variable of View erb?
-          hint = Sorcerer.source(sexp)
-          model = sexp[1][1][1]
-          attribute = sexp[3][1]
-          if  attribute == 'each'
-            # TODO: this is do_block
-            $log.debug "TODO: this is do_block"
-          else
-            # SRC _ID
-            state = true
-            id = "S_" + model.gsub('@', '') + "#" + attribute
-          end
-        elsif sexp[0].to_s == 'call' && sexp[1][0].to_s == 'var_ref' && sexp[3][0].to_s == '@ident'
-          # ruby code: User.current => s_user#current ?
-          hint  = Sorcerer.source(sexp)
-          model = sexp[1][1][1]
-          attribute = sexp[3][1]
-          # TODO: is this variable state?
-          state = true
-          id = "S_" + model.gsub('@', '') + "#" + attribute
-        else
-          $log.error "get_variable ERROR unknown variable"
-          ruby_code = get_ruby(sexp)
-          puts "  filename : #{$filename}"
-          puts "  ruby code: #{ruby_code}"
-          puts "  sexp     :"
-          pp sexp # with $log.error
-        end
-
-        return state, id, hint
-      end
-
-      # get variable
-      # var_ref => S_model#att
-      def get_variable2(sexp)
-        # init
-        state = false   # true -> Dataflow
-        id    = nil
-        hint  = Sorcerer.source(sexp)
-        todo  = false
-
-        if sexp[0] == :call
-          if sexp[1][0] == :var_ref
-            if sexp[1][1][0] == :@ivar && sexp[3][0] == :@ident
-              # @page.user
-              model  = sexp[1][1][1]
-              attrib = sexp[3][1]
-              state = true
-              id = "S_" + model.gsub('@', '') + "#" + attrib
-            elsif sexp[1][1][0] == :@ident && sexp[3][0] == :@ident
-              # role.description
-              model  = sexp[1][1][1]
-              attrib = sexp[3][1]
-              state = true
-              id = "S_" + model.gsub('@', '') + "#" + attrib
-            else
-              # Role.all
-              $log.info "get_variable2() TODO"
-            end
-          elsif sexp[1][0] == :vcall
-            if sexp[1][1][0] == :@ident && sexp[3][0] == :@ident
-              # current_user.name
-              model  = sexp[1][1][1]
-              attrib = sexp[3][1]
-              state = true
-              id = "S_" + model.gsub('@', '') + "#" + attrib
-            else
-              $log.info "get_variable2() TODO"
-              todo = true
-            end
-          elsif sexp[1][0] == :call
-            if sexp[1][1][0] == :var_ref && sexp[1][3][0] == :@ident && sexp[3][0] == :@ident
-              #  @page.user.name  = page -> user#name
-              pmodel = sexp[1][1][1][1]
-              model  = sexp[1][3][1]
-              attrib = sexp[3][1]
-              state = true
-              id = "S_" + model.gsub('@', '') + "#" + attrib
-            elsif sexp[1][1][0] == :vcall && sexp[1][3][0] == :@ident && sexp[3][0] == :@ident
-              #  current_user.role.name  = current_user -> user#name
-              pmodel = sexp[1][1][1][1]
-              model  = sexp[1][3][1]
-              attrib = sexp[3][1]
-              state = true
-              id = "S_" + model.gsub('@', '') + "#" + attrib
-            else
-              $log.info "get_variable2() TODO"
-            end
-          else
-            # role.users.map(, &:name).join
-            $log.info "get_variable2() TODO"
-          end
-        else
-          $log.info "get_variable2() TODO"
-          todo = true
-        end
-
-        if todo
-          $log.error "get_variable2() TODO: #{$filename}"
-          pp sexp
-          p hint
-        end
-
-        return state, id, hint, model, attrib
-      end
-
       # TODO: move to View?
       # Add command call
       #
@@ -1089,20 +1443,15 @@ module Abstraction
           else
             state, id, hint, model, attrib = get_variable2(sexp)
             if state
-              if model == 'f' && attrib == 'submit'
-                dst_id = "C_#{$form_target}#create"
-                guard = "action == 'new'"
-                $t1 = add_transition('submit', $state.id, dst_id, nil, guard, @filename)
-
-                dst_id = "C_#{$form_target}#update"
-                guard = "action == 'edit'"
-                $t2 = add_transition('submit', $state.id, dst_id, nil, guard, @filename)
-
-                # variables
-                $t1.variables = $submit_variables
-                $t2.variables = $submit_variables
-                $submit_variables = []  # reset
-              else
+              df = true
+              if model == 'f'  # TODO: must be 'f' i.e. do |f|
+                if attrib == 'submit'
+                  add_trans_by_form_submit(sexp)
+                  # TODO: No DF? for f.submit
+                  df = false
+                end
+              end
+              if df
                 if $xss_raw_region == true
                   $dataflows << add_dataflow('out', 'raw_out', id, hint, $state.id, nil, @filename)  # save this to current DF list
                   $xss_raw_region = false
@@ -1119,75 +1468,49 @@ module Abstraction
         parse_sexp_common(level, sexp)
       end
 
-      # Add command call
-      #
-      #  View
-      #    form_for
-      # sexp =
-      #   :method_add_arg,
-      #     :fcall
-      #     :arg_paren,
-      def add_fcall(level, sexp, type)
-        # get command name
-        name =  sexp[1][1][1] if sexp[1][1][0] == :@ident
-
-        if name == 'form_for'
-          var_ref = sexp[2][1]
-          var = nil
-          sarg = nil
-          command_call(level, sexp, var_ref, name, var, sarg)
-        else
-          $log.info "AST - add_fcall type=#{type} name=#{name}"
-          parse_sexp_common(level, sexp)
-        end
-      end
-
-      # command_call parser for View(ERB)
-      #   => dataflow
-      def command_call(level, sexp, var_ref, type, var, sarg)
-        # DIR
-        # -----------------------------------
-        # Output (M->V)       - label,
-        # Input  (   V->C->M) - text_area text_field
-        # Submit (   V->C->M) - submit
-        unknown = false
-
-        # 20130702 move to $abst_commands
-        name = type
-        if $abst_commands[name].nil?
-          # Unknown command?
-          # TODO: Call in View  eg. user.email
-          # Skip for now
-          if sexp[0].to_s == 'call'
-            call = sexp
+      # V--form-->V--submit--C
+      #   add create and/or update trans if dst is exist
+      # $form_target must be set
+      # note)
+      # we parse the view, so at this time, we create two trans.  delete wrong path later
+      def add_trans_by_form_submit(sexp)
+        if $form_target.nil?
+          dst_id = nil
+          if $state.action == 'new'
+            dst_id = "C_#{$state.model}#create"
           else
-            c = Abstraction::Command.new
-            c.name  = name
-            c.type  = 'unknown_command2'
-            c.count = 1  # include this
-            $abst_commands[name] = c
+            dst_id = "C_#{$state.model}#update"
           end
+          unless dst_id.nil?
+            $log.debug "add_trans_by_form_submit() #{dst_id}"
+            t = add_transition('submit', $state.id, dst_id, nil, $guard, @filename)
+            t.variables = $submit_variables
+            $submit_variables = []  # reset
+          end
+
         else
-          cmd = $abst_commands[name]
-          # Add trans
-          if cmd.has_trans
-            add_transition_by_command(name, $state, $guard, sarg, @filename)
+          if $state.action == 'new' || $state.action == 'edit'
+            dst_id = "C_#{$state.model}#create" if $state.action == 'new'
+            dst_id = "C_#{$state.model}#update" if $state.action == 'edit'
+            $log.debug "add_trans_by_form_submit() #{dst_id}"
+            t = add_transition('submit', $state.id, dst_id, nil, $guard, @filename)
+            t.variables = $submit_variables
+          else
+            # form_for
+            dst_id = "C_#{$form_target}#create"  # $form_target <= at form_for
+            guard = "action == 'new'"
+            t1 = add_transition('submit', $state.id, dst_id, nil, guard, @filename)
+            t1.variables = $submit_variables
+            t1.tentative = true
+
+            dst_id = "C_#{$form_target}#update"
+            guard = "action == 'edit'"
+            t2 = add_transition('submit', $state.id, dst_id, nil, guard, @filename)
+            t2.variables = $submit_variables
+            t2.tentative = true
           end
 
-          # Add dataflow
-          if cmd.has_dataflow
-            add_dataflow_by_command(cmd, $state, $guard, sarg, @filename)
-          end
-
-          # add vars to submit list
-          if cmd.is_inbound
-            rubycode = get_ruby(sexp[4])
-            # fail "#{rubycode}"
-            $submit_variables << rubycode
-          end
-
-          # Optional abstraction for custom commands
-          $abst_commands[name].abstract(sexp, nil, @filename)
+          $submit_variables = []  # reset
         end
       end
 

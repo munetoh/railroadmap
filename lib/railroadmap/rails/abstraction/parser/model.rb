@@ -155,10 +155,13 @@ module Abstraction
       end
 
       # Ruby -> AST by Ripper
-      def load(modelname, filename)
+      #  modelname  M_hoge
+      #  model      hoge
+      #  filename   app/model/hoge.rb
+      def load(modelname, model, filename)
         @modelname = modelname
         @filename = filename
-        $log.debug "Model.load #{modelname} #{filename}"
+
         # clear flags
         $attr_accessible = nil
         $parse_cancan = false
@@ -174,12 +177,16 @@ module Abstraction
               s.origin = 'auto(cancan)'
               $log.debug "added CanCan Ability model"
               # Set CanCan
-              $parse_cancan = true
+              $parse_cancan = true # TODO: deprecated
             else
               fail "#{modelname} is missing, check schema file. If the app is using CanCan, set,  $authorization = 'cancan'"
             end
           else
-            $log.info "SKIP #{modelname} #{@filename}"
+            # no entry in db/schema.rb file
+            # $log.error "SKIP #{modelname} #{@filename}"
+
+            s = add_state('model', model, @filename)
+            s.origin = 'file'
           end
         else
           $abst_states[@modelname].filename << @filename

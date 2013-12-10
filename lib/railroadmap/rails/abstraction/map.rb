@@ -95,15 +95,17 @@ module Abstraction
 
         unless domain.nil?
           name = route[:name]
-          url  = route[:path].spec.to_s
+          # url  = route[:path].spec.to_s
+          url  = route[:path].to_s
 
           # Regexp
           # '(?-mix:^PUT$)'    => PUT
           # (?-mix:^GET|POST$) => GET|POST
-          list = route[:verb].to_s.scan(/\^(\S+)\$/)[0]
-          list = [""] if list.nil?
-          list.append(name)
-          list.append(url)
+          # list = route[:verb].to_s.scan(/\^(\S+)\$/)[0]
+          # list = [''] if list.nil?
+          list = [route[:verb].to_s]
+          list << name
+          list << url
 
           #  devise/session#new => devise:session#new
           domain2 = domain.gsub('/', ':')

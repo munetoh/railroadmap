@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 # Commands of Rails Framework
 #
+# TODO: commonization and generalization => asb.rb
 
 #
 module Rails
@@ -90,88 +91,6 @@ module Rails
       # end
       #
       # respond_with(@product, :location => products_url)
-    end
-  end
-
-  # V->C
-  # submit_tag
-  class SubmitTagCommand < Abstraction::Command
-    def initialize
-      super
-      @name = 'submit_tag'
-      @type = 'transition'  # TODO
-      @subtype = 'post'
-      @providedby = 'rails'
-    end
-
-    def abstract(sexp, sarg, filename)
-      super
-      # $log.error "TODO: command submit_tag  #{$state.id} #{sarg} #{$guard} #{$filename}"
-
-      # TODO: share with command_call
-      t = add_transition('submit', $state.id, nil, nil, $guard, @filename)
-      # TODO: link with the dataflow
-      # p $submit_variables
-      t.subtype = @name
-      t.variables = $submit_variables
-      $submit_variables = []  # reset
-    end
-  end
-
-  # submit
-  class SubmitCommand < Abstraction::Command
-    def initialize
-      super
-      @name = 'submit'
-      @type = 'transition'  # TODO
-      @subtype = 'post'
-      @providedby = 'rails'
-    end
-
-    def abstract(sexp, sarg, filename)
-      super
-      # TODO: f.submit automatically set the destinations, create and update.
-      # workaround
-      #  action    dst
-      #  -----------------------
-      #  new       create
-      #  edit      update
-      #  _form     both
-
-      if $state.action == 'new'
-        dst_id = "C_#{$state.model}#create"
-      else
-        dst_id = "C_#{$state.model}#update"
-      end
-
-      # add Transition
-      t = add_transition('submit', $state.id, dst_id, nil, $guard, @filename)
-      t.variables = $submit_variables
-      $submit_variables = []  # reset
-    end
-  end
-
-  # button
-  class ButtonCommand < Abstraction::Command
-    def initialize
-      super
-      @name = 'button'
-      @type = 'transition'  # TODO
-      @subtype = 'post'
-      @providedby = 'rails'
-    end
-
-    def abstract(sexp, sarg, filename)
-      super
-      if sexp[4][1][0][1][1][1] == 'submit'
-        $log.debug "command_call->button  #{$submit_variables} #{$state.id} #{$guard} #{@filename}"
-        t = add_transition('submit', $state.id, nil, nil, $guard, @filename)
-        t.variables = $submit_variables
-        $submit_variables = []
-      else
-        $log.error "command_call->button  UNKNWON #{$state.id} #{$guard} #{@filename}"
-        pp sexp
-      end
     end
   end
 
@@ -657,123 +576,6 @@ module Rails
     end
   end
 
-  #----------------------------------------------------------------------------
-  # Input
-  # form_for
-  #
-  #   form_for(@role, :url => admin_roles_path) do |f|
-  #   [:fcall, [:@ident, "form_for", [13, 11]]],
-  #
-  #   $form_block    = true
-  #   $form_target   = role
-  #   $do_variables  = [f]
-  #
-  class FormForCommand < Abstraction::Command
-    def initialize
-      super
-      @name = 'form_for'
-      @type = 'input_dataflow'  # TODO
-      @providedby = 'rails'
-    end
-
-    def abstract(sexp, sarg, filename)
-      $form_block  = true
-      $form_target = nil
-
-      # fcall
-      if sexp[1][0] == :fcall
-        s = sexp[2][1]
-      else
-        s = sexp[2]
-      end
-
-      if s[0] == :args_add_block && s[1][0][0] == :var_ref && s[1][0][1][0] == :@ivar
-        # form_for @page do |f|
-        # [:args_add_block, [[:var_ref, [:@ivar, "@page", [2, 12]]]], false]]
-        target = s[1][0][1][1]
-        $form_target = target.gsub('@', '')
-
-        if !s[1][1].nil? && s[1][1][0] == :bare_assoc_hash
-          # form_for @user, :method => :put do |f|
-          $log.info "FormForCommand() TODO: DATAFLOW method exist"
-        end
-      else
-        # <%= form_for(resource, :as => resource_name, :url => confirmation_path(resource_name), :html => { :method => :post }) do |f| %>
-        $log.info "FormForCommand() TODO: DATAFLOW #{filename} no target => set TBD"
-        $form_target = "TBD"
-      end
-
-      if $form_target.nil?
-        $log.error "FormForCommand() TODO: DATAFLOW no target"
-        fail "DEBUG"
-      else
-        # DEBUG
-        # $log.error "FormForCommand() TODO: DATAFLOW target = #{$form_target} #{filename}"
-      end
-    end
-
-    def block_end
-      $form_block = false
-      $form_target = nil
-      $form_variable = nil
-    end
-  end
-
-  # form_tag
-  #
-  # form_for(@role, :url => admin_roles_path) do |f|
-  # [:fcall, [:@ident, "form_for", [13, 11]]],
-  #
-  class FormTagCommand < Abstraction::Command
-    # init
-    def initialize
-      super
-      @name = 'form_tag'
-      @type = 'input_dataflow'  # TODO
-      @providedby = 'rails'
-    end
-
-    def abstract(sexp, sarg, filename)
-      $form_target = nil
-
-      s1 = get_sexp(sexp, :args_add_block)
-      if s1.nil?
-        $log.error "FormTagCommand() TODO"
-        fail "DEBUG"
-      end
-
-      s2 = get_sexp(s1, :method_add_arg)
-      unless s2.nil?
-        # Hit
-        s3 = get_sexp(s2, :fcall)
-        if s3.nil?
-          $log.error "FormTagCommand() DATAFLOW TODO"
-        else
-          if s3[1][0] == :@ident
-            $form_target = s3[1][1]
-            $log.info "FormTagCommand() DATAFLOW TODO: #{filename} => #{$form_target}"
-            return
-          end
-        end
-      end
-
-      # Try
-      # HAML  = form_tag change_role_path, :method => :put do
-      s2 = get_sexp(s1, :vcall)
-      unless s2.nil?
-        if s2[1][0] == :@ident
-          $form_target = s2[1][1]
-          $log.info "FormTagCommand() DATAFLOW TODO: #{filename} => #{$form_target}"
-          return
-        end
-      end
-
-      $log.error "FormTagCommand() DATAFLOW TODO: #{filename} => #{$form_target}"
-      pp sexp
-      fail "DEBUG"
-    end
-  end
-
   # ============================================================================
   # add  to the list
   class Commands < Abstraction::Parser::AstParser
@@ -787,9 +589,6 @@ module Rails
       # TODO
       add_command_to_list(Rails::RespondToCommand.new)
       add_command_to_list(Rails::RespondWithCommand.new)
-      add_command_to_list(Rails::SubmitTagCommand.new)
-      add_command_to_list(Rails::SubmitCommand.new)
-      add_command_to_list(Rails::ButtonCommand.new)
 
       # Command/View/Sefurity Functions
       add_command_to_list(Rails::RawCommand.new)
@@ -813,10 +612,6 @@ module Rails
       # 20130819
       add_command_to_list(Rails::HasManyCommand.new)
       add_command_to_list(Rails::BelongsToCommand.new)
-
-      # 0130816
-      add_command_to_list(Rails::FormForCommand.new)
-      add_command_to_list(Rails::FormTagCommand.new)
 
       # Common?
       # Transition
@@ -1061,11 +856,8 @@ module Rails
       add_todo_command_to_list('after_save', 'TODO_rails_command')
       add_todo_command_to_list('after_commit', 'TODO_rails_command')
 
-      #
       # View
-      #
       # C->V->C
-      add_todo_command_to_list('simple_form_for', 'TODO_rails_command')  # TODO
 
       # url_for
       # http://railsdoc.com/references/url_for
@@ -1148,39 +940,97 @@ module Rails
 
       rails_command_list = {
         'protect_from_forgery' => {
-          'type' => 'unknown_filter',
-          'providedby' => 'rails'
+          type:       'unknown_filter',
+          providedby: 'rails',
         },
         # RAILS_ROOT/lib/authenticated_system.rb?
         'login_required' => {
-          'type' => 'unknown_filter',
-          'providedby' => 'rails'
+          type:       'unknown_filter',
+          providedby: 'rails',
         },
         # http://railsdoc.com/references/validates
         # TODO: Dataflow?
         'validates' => {
-          'type' => 'unknown_filter',
-          'providedby' => 'rails'
+          type:       'unknown_filter',
+          providedby: 'rails',
         },
         'puts' => {
-          'type' => 'unknown',
-          'providedby' => 'ruby'
+          type:       'unknown',
+          providedby: 'ruby',
         },
         'p' => {
-          'type' => 'unknown',
-          'providedby' => 'ruby'
+          type:       'unknown',
+          providedby: 'ruby',
         },
         # Get Test
         't' => {
-          'type' => 'unknown',
-          'providedby' => 'ruby'
+          type:       'unknown',
+          providedby: 'ruby',
         },
         'helper_method' => {
-          'type' => 'unknown',
-          'providedby' => 'rails'
-        }
+          type:       'unknown',
+          providedby: 'rails',
+        },
+
+        # Be generic
+        # From
+        'form_for' => {
+           type:       'input_dataflow',  # form_for form_tag
+           subtype:    'form',
+           providedby: 'rails',
+        },
+        'form_tag' => {
+           type:       'input_dataflow',  # form_for form_tag
+           subtype:    'form',
+           providedby: 'rails',
+        },
+        # submit/POST
+
+        'submit' => {
+          type:       'transition',
+          subtype:    'post',
+          providedby: 'rails',
+        },
+        'submit_tag' => {
+          type:       'transition',
+          subtype:    'post',
+          providedby: 'rails',
+        },
+        'button' => {
+          type:       'transition',
+          subtype:    'post',
+          providedby: 'rails',
+        },
       }
       add_command_list(rails_command_list)
+
+      # simple_form
+      # https://github.com/plataformatec/simple_form
+      simple_form_command_list = {
+        'simple_form_for' => {
+           type:       'input_dataflow',  # form_for form_tag
+           subtype:    'form',
+           providedby: 'simple_form',
+        },
+      }
+      add_command_list(simple_form_command_list)
+
+      # semantic_menu
+      # https://github.com/danielharan/semantic-menu
+      semantic_menu_command_list = {
+        'semantic_menu' => {
+           type:       'input_dataflow',
+           subtype:    'form',
+           providedby: 'semantic_menu',
+        },
+
+        'add' => {
+           type:       'transition',
+           subtype:    'link_to',
+           providedby: 'semantic_menu',
+        },
+      }
+      add_command_list(semantic_menu_command_list)
     end
   end
 end

@@ -170,6 +170,16 @@ module Rails
       }
     end
 
+    #--------------------------------------------------------------------------
+    # Code
+    # call
+    def compleate_pep_assignment
+      super
+      puts "    The_Role: compleate PEP assignment TODO"
+      # Controller
+    end
+
+    #--------------------------------------------------------------------------
     # Requiremrnts
     #
     def access_control_table
@@ -282,6 +292,22 @@ module Rails
         f.write("p \"Roles created\"\n")
       end # open
       puts "    PDP file: #{filename}"
+    end
+
+    def print_sample_requirements_base_policies
+      puts "  'role' => {         # The_Role"
+      puts "    model_alias: { # map the_role to appmodel"
+      puts "      'admin:role'         => 'role',"
+      puts "      'admin:role_section' => 'role' },"
+      puts "    is_authenticated: true,"
+      puts "    is_authorized:    true, # Admin only"
+      puts "    level: 15,  # Mandatory?"
+      puts "    color: 'red'"
+      puts "    roles:  ["
+      puts "      { role: 'admin',  action: 'CRUD' },"
+      puts "      { role: 'user',   action: 'R' } ]"
+      puts "  },"
+      return ['role']
     end
   end
 end

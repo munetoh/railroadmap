@@ -78,9 +78,38 @@
         <% end %>
       <% end %>
     </tbody>
-  </table>  
+  </table>
+
   <h3> </h3>
-  <h3> RailroadMap Errors (TBD)</h3>
+  <h3> 
+    RailroadMap Errors
+    (<span class="covered_percent"><span class="<%= errors_css_class(railroadmap_errors_count) %>">
+    <%= railroadmap_errors_count %>
+    </span></span>
+     errors)
+  </h3>
+  <table class="errors_list">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Severity</th>
+        <th>Type</th>
+        <th>Message</th>
+        <th>Remidiation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% errors.each do |key, error| %>
+          <tr class="<%= errors_css_tr_class(error['severity'])%>">
+            <td><%= key %></td>
+            <td><%= error['severity'] %></td>
+            <td><%= error['error_type'] %></td>
+            <td><%= error['message'] %></td>
+            <td><%= error['remidiation'] %></td>
+          </tr>
+      <% end %>
+    </tbody>
+  </table>
 
   <h3> </h3>
   <h3> 
