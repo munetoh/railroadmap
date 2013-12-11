@@ -1,3 +1,7 @@
+=== 0.2.2 / 2013-12-12 (Seiji Munetoh)
+* added command_library, now we use JSON to define the command behavior
+* cleanup spec files
+
 === 0.2.1 / 2013-12-08 (Seiji Munetoh)
 * commonization of 'form_for' type commands, include semantic_menu.
 * cleanup spec files

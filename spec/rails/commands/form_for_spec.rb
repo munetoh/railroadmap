@@ -9,108 +9,11 @@
 #
 # rspec --color spec/rails/commands/form_for_spec.rb
 
-require 'rubygems'
-require 'rspec'
+require 'spec_helper'
 
-require 'railroadmap/rails/abstraction'
-require 'pp'
+# sample ERB and HAML codes
 
-# Logging
-require 'logger'
-$log = Logger.new(STDOUT)
-$log.level = Logger::ERROR
-$log.formatter = proc do |severity, datetime, progname, msg|
-  if severity == 'ERROR' || severity == 'INFO' || severity == 'DEBUG'
-    position = caller.at(4).sub(%r{.*/}, '').sub(%r{:in\s.*}, '')
-    "#{severity} #{position} #{msg}\n"
-  else
-    "#{severity} #{msg}\n"
-  end
-end
-
-# Global
-$block_var = []
-$abst_commands = {}
-$unknown_command = 0
-$abst_states = {}
-$abst_transitions = {}
-$route_map = {}
-$abst_transitions_count = 0
-$path2id = {}
-$abst_dataflows = {}
-$abst_dataflows_count = 0
-
-# Command library
-$rails_command_list = {
-  'text_field' => {
-     type:       'dataflow',
-     subtype:    'output',
-     providedby: 'rails',
-  },
-  'label' => {
-     type:       'dataflow',
-     subtype:    'output',
-     providedby: 'rails',
-  },
-
-  'form_for' => {
-     type:       'input_dataflow',  # form_for form_tag
-     subtype:    'form',
-     providedby: 'rails',
-  },
-
-  # simple_form
-  'simple_form_for' => {
-     type:       'input_dataflow',  # form_for form_tag
-     subtype:    'form',
-     providedby: 'simple_form',
-  },
-  'input' => {
-     type:       'dataflow',  # form_for form_tag
-     subtype:    'input',
-     providedby: 'rails',
-  },
-
-  'button' => {
-     type:       'transition',  # form_for form_tag
-     subtype:    'post',
-     providedby: 'rails',
-  },
-
-  # semantic_menu
-  'semantic_menu' => {
-     type:       'input_dataflow',  # form_for form_tag
-     subtype:    'form',
-     providedby: 'semantic_menu',
-  },
-
-  'add' => {
-     type:       'transition',  # link_to
-     subtype:    'link_to',
-     providedby: 'semantic_menu',
-  },
-}
-
-describe Abstraction::Parser::Controller do
-
-  # ===============================================================================
-  # form_for
-  # http://apidock.com/rails/ActionView/Helpers/FormHelper/form_for
-  it ": Parse form_for (ERB)" do
-    apv = Abstraction::Parser::View.new
-
-    #  dummy state
-    $abst_states = {}
-    sc1    = apv.add_state('controller', 'offer#create', nil)
-    $state = apv.add_state('view', 'offer#new', nil)
-
-    apv.add_command_list($rails_command_list)
-    $abst_transitions_count = 0
-    $abst_transitions = {}
-    # $form_target = 'hoge'  # set by lib/railroadmap/rails/rails-commands.rb => TODO generic? by AST side
-    $form_target = nil
-
-    erb_code = <<"EOS"
+erb_code1 = <<"EOS"
 <%= form_for @offer do |f| %>
   <%= f.label :version, 'Version' %>:
   <%= f.text_field :version %><br />
@@ -120,13 +23,82 @@ describe Abstraction::Parser::Controller do
 <% end %>
 EOS
 
+haml_code1 = <<"EOS"
+= form_for @offer do |f|
+  = f.label :version, 'Version'
+  = f.text_field :version
+  = f.label :author, 'Author'
+  = f.text_field :author
+  = f.submit
+EOS
+
+erb_code2 = <<"EOS"
+<%= simple_form_for @user do |f| %>
+  <%= f.input :username %>
+  <%= f.input :password %>
+  <%= f.button :submit %>
+<% end %>
+EOS
+
+haml_code2 = <<"EOS"
+=simple_form_for @user do |f|
+  .inputs
+    =f.input :username
+    =f.input :password
+  .actions
+    =f.button :submit
+EOS
+
+haml_code3 = <<"EOS"
+=simple_form_for(@message, :url => mailer_path, :test => test_path) do |f|
+        =f.error_notification
+        .inputs
+                =f.input :subject, :hint => "Write the subject here!"
+                =f.input :body, :as => :text
+                -@emails.each do |email|
+                        =f.input "email", :as => :text, :as => :hidden, :input_html => { :value => ""}
+        .actions
+                =f.button :submit , 'Send Email', :class => "primary btn"
+EOS
+
+erb_code4 = <<"EOS"
+<%= semantic_menu do |root|
+  root.add "overview", root_path
+  root.add "comments", comments_path
+end %>
+EOS
+
+# >
+
+describe Abstraction::Parser::View do
+
+  it ": init railroadmap" do
+    init_railroadmap
+    $apv = Abstraction::Parser::View.new
+    $apv.add_json_command_list('./lib/railroadmap/command_library/rails.json')
+    $apv.add_json_command_list('./lib/railroadmap/command_library/simple_form.json')
+    $apv.add_json_command_list('./lib/railroadmap/command_library/semantic_menu.json')
+  end
+
+  # ===============================================================================
+  # form_for
+  # http://apidock.com/rails/ActionView/Helpers/FormHelper/form_for
+  it ": Parse form_for (ERB)" do
+    #  dummy state
+    $abst_states = {}
+    sc1    = $apv.add_state('controller', 'offer#create', nil)
+    $state = $apv.add_state('view', 'offer#new', nil)
+
+    $abst_transitions_count = 0
+    $abst_transitions = {}
+    $form_target = nil
+
     # ERB -> Ruby -> AST
-    ruby_code = Erb::Stripper.new.to_ruby(erb_code)
+    ruby_code = Erb::Stripper.new.to_ruby(erb_code1)
     sexp = Ripper.sexp(ruby_code)
     # pp sexp
 
-    apv.parse_sexp(0, sexp)
-
+    $apv.parse_sexp(0, sexp)
     # pp $abst_commands
     # pp $abst_transitions
 
@@ -144,32 +116,18 @@ EOS
 
   #-------------------------------------------------------------------------------
   it ": Parse form_for (HAML)" do
-    apv = Abstraction::Parser::View.new
-
     #  dummy state
     $abst_states = {}
-    sc1    = apv.add_state('controller', 'offer#create', nil)
-    $state = apv.add_state('view', 'offer#new', nil)
-    # apv.add_command_list($rails_command_list)
+    sc1    = $apv.add_state('controller', 'offer#create', nil)
+    $state = $apv.add_state('view', 'offer#new', nil)
     $abst_transitions_count = 0
     $abst_transitions = {}
 
-    haml_code = <<"EOS"
-= form_for @offer do |f|
-  = f.label :version, 'Version'
-  = f.text_field :version
-  = f.label :author, 'Author'
-  = f.text_field :author
-  = f.submit
-EOS
-
     # HAML -> Ruby -> AST
-    ruby_code = apv.conv_haml2ruby(haml_code)
-    # puts ruby_code
+    ruby_code = $apv.conv_haml2ruby(haml_code1)
     sexp = Ripper.sexp(ruby_code)
 
-    apv.parse_sexp(0, sexp)
-
+    $apv.parse_sexp(0, sexp)
     # pp $abst_commands
     # pp $abst_transitions
 
@@ -180,32 +138,20 @@ EOS
   # simple_form_for
   # https://github.com/plataformatec/simple_form
   it ": Parse simple_form_for (ERB)" do
-    apv = Abstraction::Parser::View.new
-
     # dummy state
     $abst_states = {}
-    sc1 = apv.add_state('controller', 'user#update', nil)
-
-    $state = apv.add_state('view', 'user#edit', nil)
-    # apv.add_command_list($rails_command_list)
+    sc1    = $apv.add_state('controller', 'user#update', nil)
+    $state = $apv.add_state('view', 'user#edit', nil)
     $abst_transitions_count = 0
     $abst_transitions = {}
     $form_target = 'hoge'
 
-    erb_code = <<"EOS"
-<%= simple_form_for @user do |f| %>
-  <%= f.input :username %>
-  <%= f.input :password %>
-  <%= f.button :submit %>
-<% end %>
-EOS
-
     # ERB -> Ruby -> AST
-    ruby_code = Erb::Stripper.new.to_ruby(erb_code)
+    ruby_code = Erb::Stripper.new.to_ruby(erb_code2)
     sexp = Ripper.sexp(ruby_code)
     # pp sexp
 
-    apv.parse_sexp(0, sexp)
+    $apv.parse_sexp(0, sexp)
     # pp $abst_commands
     # pp $abst_transitions
 
@@ -220,34 +166,22 @@ EOS
 
   #-------------------------------------------------------------------------------
   it ": Parse simple_form_for (HAML)" do
-    apv = Abstraction::Parser::View.new
-
     #  dummy state
     $abst_states = {}
-    sc1 = apv.add_state('controller', 'user#create', nil)
-    $state = apv.add_state('view', 'user#new', nil)
+    sc1    = $apv.add_state('controller', 'user#create', nil)
+    $state = $apv.add_state('view', 'user#new', nil)
     # apv.add_command_list($rails_command_list)
     $abst_transitions_count = 0
     $abst_transitions = {}
 
-    haml_code = <<"EOS"
-=simple_form_for @user do |f|
-  .inputs
-    =f.input :username
-    =f.input :password
-  .actions
-    =f.button :submit
-EOS
-
     # HAML -> Ruby -> AST
-    ruby_code = apv.conv_haml2ruby(haml_code)
+    ruby_code = $apv.conv_haml2ruby(haml_code2)
+    sexp = Ripper.sexp(ruby_code)
     # puts haml_code
     # puts ruby_code
-
-    sexp = Ripper.sexp(ruby_code)
     # pp sexp
 
-    apv.parse_sexp(0, sexp)
+    $apv.parse_sexp(0, sexp)
     # pp $abst_commands
     # pp $abst_transitions
 
@@ -257,42 +191,24 @@ EOS
 
   # -------------------------------------------------------------------------------
   it ": Parse simple_form_for (HAML) 2" do
-    apv = Abstraction::Parser::View.new
-
     # dummy state
     $abst_states = {}
-    sc1 = apv.add_state('controller', 'mailer#create', nil)
-    $state = apv.add_state('view', 'mailer#new', nil)
-    # apv.add_command_list($rails_command_list)
-
+    sc1    = $apv.add_state('controller', 'mailer#create', nil)
+    $state = $apv.add_state('view', 'mailer#new', nil)
     $path2id['mailer_path'] = 'C_mailer#create'
-
     $abst_transitions = {}
     $abst_transitions_count = 0
     $abst_dataflows = {}
     $abst_dataflows_count = 0
 
-    haml_code = <<"EOS"
-=simple_form_for(@message, :url => mailer_path, :test => test_path) do |f|
-        =f.error_notification
-        .inputs
-                =f.input :subject, :hint => "Write the subject here!"
-                =f.input :body, :as => :text
-                -@emails.each do |email|
-                        =f.input "email", :as => :text, :as => :hidden, :input_html => { :value => ""}
-        .actions
-                =f.button :submit , 'Send Email', :class => "primary btn"
-EOS
-
     # HAML -> Ruby -> AST
-    ruby_code = apv.conv_haml2ruby(haml_code)
+    ruby_code = $apv.conv_haml2ruby(haml_code3)
+    sexp = Ripper.sexp(ruby_code)
     # puts haml_code
     # puts ruby_code
-
-    sexp = Ripper.sexp(ruby_code)
     # pp sexp
 
-    apv.parse_sexp(0, sexp)
+    $apv.parse_sexp(0, sexp)
     # pp $abst_commands
     # pp $abst_transitions
     # pp $abst_dataflows
@@ -306,37 +222,16 @@ EOS
   # semantic_menu
   # https://github.com/danielharan/semantic-menu
   it ": Parse semantic_menu" do
-    apv = Abstraction::Parser::View.new
-
     #  dummy state
     $abst_states = {}
-    sc1 = apv.add_state('controller', 'hoge#create', nil)
-    $state = apv.add_state('view', 'hoge#hoge', nil)
-    # apv.add_command_list($rails_command_list)
+    sc1    = $apv.add_state('controller', 'hoge#create', nil)
+    $state = $apv.add_state('view', 'hoge#hoge', nil)
     $abst_transitions_count = 0
     $abst_transitions = {}
 
-    erb_code = <<"EOS"
-<%= semantic_menu do |root|
-  root.add "overview", root_path
-  root.add "comments", comments_path
-end %>
-EOS
-
-    html_out = <<"EOS"
-<ul class="menu">
-  <li>
-    <a href="/">overview</a>
-  </li>
-  <li class="active">
-    <a href="/comments">comments</a>
-  </li>
-</ul>
-EOS
-
     # ERB -> Ruby -> AST
-    ruby_code = Erb::Stripper.new.to_ruby(erb_code)
-    sexp = Ripper.sexp(ruby_code)
+    ruby_code = Erb::Stripper.new.to_ruby(erb_code4)
+    sexp      = Ripper.sexp(ruby_code)
     # DEBUG
     # puts erb_code
     # puts html_out
@@ -345,7 +240,7 @@ EOS
     # Model
     # V ---link_to C_root
     # V ---link_to C_comment#index
-    apv.parse_sexp(0, sexp)
+    $apv.parse_sexp(0, sexp)
     # DEBUG
     # pp $abst_commands
     # pp $abst_transitions

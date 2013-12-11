@@ -1,21 +1,7 @@
 # -*- coding: UTF-8 -*-
-require 'rubygems'
-require 'rspec'
+#  rspec --color spec/rails/abstraction/controller_spec.rb
 
-require 'railroadmap/rails/abstraction'
-
-# Logging
-require 'logger'
-$log = Logger.new(STDOUT)
-$log.level = Logger::ERROR
-$log.formatter = proc do |severity, datetime, progname, msg|
-  if severity == 'ERROR' || severity == 'INFO' || severity == 'DEBUG'
-    position = caller.at(4).sub(%r{.*/}, '').sub(%r{:in\s.*}, '')
-    "#{severity} #{position} #{msg}\n"
-  else
-    "#{severity} #{msg}\n"
-  end
-end
+require 'spec_helper'
 
 # Testing targets
 #   lib/rails/abstraction.rb
@@ -23,25 +9,10 @@ end
 #   lib/rails/abstraction/parser/ast.rb
 #
 describe Abstraction::Parser::Controller do
-
-  # Setup
-  it ": create global hash tables" do
-    $abst_states =      Hash.new
-    $abst_transitions = Hash.new
-    $abst_variables =   Hash.new
-    $abst_dataflows =   Hash.new
-    $route_map = {}
-    $list_class = {}
-    $abst_commands = {}
-    $unknown_command = 0
-    $abst_transitions_count = 0
-  end
-
-  it ": set global flags" do
-    $protect_from_forgery = false
-    $verbose = 0
-    $debug = false
-    $robust = false
+  it ": init railroadmap" do
+    init_railroadmap
+    $apv = Abstraction::Parser::View.new
+    $apv.add_json_command_list('./lib/railroadmap/command_library/rails.json')
   end
 
   it ": Load the controller files (app/controllers)" do
@@ -84,8 +55,8 @@ describe Abstraction::Parser::Controller do
 
     # check
     $abst_states.size.should eq 25
-    # $abst_transitions.size.should eq 33
-    $abst_transitions.size.should eq 25
+    # v010 $abst_transitions.size.should eq 33
+    $abst_transitions.size.should eq 40
 
     # $protect_from_forgery.should eq true
     $protect_from_forgery.should eq false

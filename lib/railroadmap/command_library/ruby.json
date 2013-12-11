@@ -1,0 +1,60 @@
+// Ruby command
+{
+  "puts": {
+    "type":       "unknown",
+    "providedby": "ruby"
+  },
+  "p": {
+    "type":       "unknown",
+    "providedby": "ruby"
+  },
+  // Get Test
+  "t": {
+    "type":       "unknown",
+    "providedby": "ruby"
+  },
+  // TODO:
+  // code
+  "include": {
+    "type":       "TODO_ruby_command",
+    "providedby": "ruby",
+    "status":     "todo"
+  },
+  "require": {
+    "type":       "TODO_ruby_command",
+    "providedby": "ruby",
+    "status":     "todo"
+  },
+  "extend": {
+    "type":       "TODO_ruby_command",
+    "providedby": "ruby",
+    "status":     "todo"
+  },
+  // Exception
+  // TODO: what happen?
+  "raise": {
+    "type":       "TODO_ruby_command",
+    "providedby": "ruby",
+    "status":     "todo"
+  },
+  "to_s": {
+    "type":       "TODO_ruby_command",
+    "providedby": "ruby",
+    "status":     "todo"
+  },
+  // class_eval
+  // http://ref.xaio.jp/ruby/classes/module/class_eval
+  // TODO: hard to conv to model. so ???
+  "class_eval": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // serialize
+  // http://d.hatena.ne.jp/kusakari/20100810/1281474933
+  "serialize": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  }
+}

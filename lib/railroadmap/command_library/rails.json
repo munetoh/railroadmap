@@ -1,0 +1,642 @@
+// rails
+{
+  // From
+  "form_for": {
+     "type":       "input_dataflow",  // form_for form_tag
+     "subtype":    "form",
+     "providedby": "rails"
+  },
+  "form_tag": {
+     "type":       "input_dataflow",  // form_for form_tag
+     "subtype":    "form",
+     "providedby": "rails"
+  },
+
+  // Transition
+  // C->C
+  "redirect_to": {
+    "type":       "transition",
+    "subtype":    "redirect_to",
+    "has_trans":  true,
+    "providedby": "rails"
+  },
+  // C->V, V->V
+  "render": {
+    "type":       "transition",
+    "subtype":    "render",
+    "has_trans":  true,
+    "providedby": "rails"
+  },
+  // V->C
+  "link_to": {
+    "type":       "transition",
+    "subtype":    "link_to",
+    "has_trans":  true,
+    "providedby": "rails"
+  },
+  // submit/POST
+  "submit": {
+    "type":       "transition",
+    "subtype":    "post",
+    "has_trans":  true,
+    "providedby": "rails"
+  },
+  "submit_tag": {
+    "type":       "transition",
+    "subtype":    "post",
+    "has_trans":  true,
+    "providedby": "rails"
+  },
+  "button": {
+    "type":       "transition",
+    "subtype":    "post",
+    "has_trans":  true,
+    "providedby": "rails"
+  },
+  "button_to": {
+    "type":       "transition",
+    "subtype":    "post",
+    "has_trans":  true,
+    "providedby": "rails"
+  },
+
+
+  // dataflow/outout
+  "label": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  false,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "javascript_tag": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  false,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "stylesheet_link_tag": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  false,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "javascript_include_tag": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  false,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "error_notification": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  false,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+
+  // dataflow/input and outout
+  "text_field": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "text_field_tag": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+
+  "text_area": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "text_area_tag": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "password_field": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "select_tag": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "content_tag": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "check_box": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "email_field": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+
+  // hidden_field_tag
+  // http://railsdoc.com/references/hidden_field
+  "hidden_field": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+  "hidden_field_tag": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+
+  // dataflow/ input
+  "input": {
+     "type":       "dataflow",  // form_for form_tag
+     "subtype":    "input",
+     "is_inbound":  true,
+     "is_outbound": false,
+     "providedby": "rails"
+  },
+
+  // TODO: supported belows
+  "protect_from_forgery": {
+    "type":       "unknown_filter",
+    "providedby": "rails"
+  },
+  // RAILS_ROOT/lib/authenticated_system.rb?
+  "login_required": {
+    "type":       "unknown_filter",
+    "providedby": "rails"
+  },
+  // http://railsdoc.com/references/validates
+  // TODO: Dataflow?
+  "validates": {
+    "type":       "unknown_filter",
+    "providedby": "rails"
+  },
+  "helper_method": {
+    "type":       "unknown",
+    "providedby": "rails"
+  },
+
+  // Ignore commands
+  // image_tag
+  "image_tag": {
+    "type":       "ignore",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // cache_sweeper
+  // http://apidock.com/rails/ActionController/Caching/Sweeping/ClassMethods/cache_sweeper
+  // http://devml.blogspot.jp/2011/01/rails3sweep.html
+  "cache_sweeper": {
+    "type":       "ignore",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+
+  // TODO: 
+  // Model
+  "has_and_belongs_to_many": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // accepts_nested_attributes_for
+  // http://api.rubyonrails.org/classes/ActiveRecord/NestedAttributes/ClassMethods.html
+  //   Nested attributes allow you to save attributes on associated records through the parent.
+  "accepts_nested_attributes_for": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+
+  // read_attribute
+  // http://apidock.com/rails/ActiveRecord/Base/read_attribute
+  // http://blog.eiel.info/blog/2012/12/17/read-attribute-activerecord/
+  "read_attribute": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // validate
+  // TODO: SF? behavior?
+  "validate": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "validates_presence_of": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "validates_format_of": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "validates_uniqueness_of": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "validates_associated": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "validates_inclusion_of": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates_length_of
+  "validates_length_of": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates_numericality_of
+  "validates_numericality_of": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // validates_exclusion_of
+  // http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates_exclusion_of
+  // TODO: add  Trans w/ error msg
+  "validates_exclusion_of": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // validates_confirmation_of
+  // http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates_confirmation_of
+  // TODO: add trans, nav
+  "validates_confirmation_of": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // write_attribute
+  // http://apidock.com/rails/ActiveRecord/AttributeMethods/Write/write_attribute
+  // update
+  "write_attribute": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // attr_protected
+  // http://apidock.com/rails/ActiveRecord/Base/attr_protected/class
+  "attr_protected": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // before_validation
+  // http://apidock.com/rails/ActiveRecord/Callbacks/before_validation
+  "before_validation": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // after_destroy
+  // http://apidock.com/rails/ActiveRecord/Callbacks/after_destroy
+  "after_destroy": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // attribute_present?
+  // http://apidock.com/rails/ActiveRecord/Base/attribute_present%3F
+  "attribute_present?": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // cattr_accessor
+  // http://apidock.com/rails/Class/cattr_accessor
+  // http://rubyist.g.hatena.ne.jp/yamaz/20070107
+  "cattr_accessor": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+
+  // before_destroy after_update
+  // http://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html
+  // http://ameblo.jp/axio9da/entry-10810821007.html
+  "before_destroy": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "after_update": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // delete_all
+  // http://apidock.com/rails/ActiveRecord/Base/delete_all/class
+  // http://railsdoc.com/references/delete_all
+  "delete_all": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // delegate
+  // http://apidock.com/rails/Module/delegate
+  // http://maeshima.hateblo.jp/entry/20101031/1288539329
+  "delegate": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // assign_attributes
+  // http://apidock.com/rails/ActiveRecord/Base/assign_attributes
+  "assign_attributes": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // instance_variable_defined?
+  // http://apidock.com/ruby/Object/instance_variable_defined%3F
+  "instance_variable_defined?": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // default_scope
+  // http://apidock.com/rails/ActiveRecord/Base/default_scope/class
+  // http://railsdoc.com/references/default_scope
+  // http://d.hatena.ne.jp/sinsoku/20110620/1308496688
+  // control DB scope
+  "default_scope": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // require_dependency
+  // http://apidock.com/rails/ActiveSupport/Dependencies/Loadable/require_dependency
+  // http://d.hatena.ne.jp/sai-ou89/20081218/1208940536
+  "require_dependency": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // has_one
+  // http://apidock.com/rails/ActiveRecord/Associations/ClassMethods/has_one
+  // http://railsdoc.com/references/has_one
+  // http://blog.digital-squad.net/article/278843296.html   has_one VS belong_to
+  "has_one": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // update_attribute
+  // http://apidock.com/rails/ActiveRecord/Base/update_attribute
+  // http://d.hatena.ne.jp/LukeSilvia/20080816/p2   update_attribute VS update_attributes
+  "update_attribute": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // update_all
+  // http://apidock.com/rails/ActiveRecord/Base/update_all/class
+  // http://d.hatena.ne.jp/zucay/20121026/1351219598
+  "update_all": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // class_attribute
+  // http://apidock.com/rails/Class/class_attribute
+  "class_attribute": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // include?
+  // e.g. seen.include?(name)
+  "include?": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // join
+  "join": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html
+  // http://qiita.com/yaotti/items/87cfdabf7f1e7b3d83a8
+  // Block
+  "before_save": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "before_create": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "after_create": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "after_save": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "after_commit": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // View
+  // C->V->C
+
+  // url_for
+  // http://railsdoc.com/references/url_for
+  // TODO: link to?
+  "url_for": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://api.rubyonrails.org/classes/ActionView/Helpers/UrlHelper.html
+  // TODO: add trans
+  "link_to_if": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "link_to_unless": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "link_to_unless_current": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionView/Helpers/AssetTagHelper/favicon_link_tag
+  "favicon_link_tag": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionView/Helpers/FormTagHelper/label_tag
+  // TODO: dataflow?
+  "label_tag": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionView/Helpers/FormTagHelper/password_field_tag
+  "password_field_tag": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionView/Helpers/CaptureHelper/content_for
+  "content_for": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionView/Helpers/FormTagHelper/check_box_tag
+  "check_box_tag": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionView/Helpers/JavaScriptHelper/escape_javascript
+  // TODO: security func
+  "escape_javascript": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  //
+  // Controller
+  //
+  "rescue_from": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionController/Filters/ClassMethods/append_before_filter
+  "has_and_belongs_to_many": {
+    "type":       "append_before_filter",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionController/Filters/ClassMethods/after_filter
+  // http://apidock.com/rails/AbstractController/Callbacks/ClassMethods/after_filter
+  "has_and_belongs_to_many": {
+    "type":       "after_filter",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionController/Streaming/send_data
+  // Sends the given binary data to the browser
+  "has_and_belongs_to_many": {
+    "type":       "send_data",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // http://apidock.com/rails/ActionController/Caching/Actions
+  // http://apidock.com/rails/ActionController/Caching/Actions/ClassMethods/caches_action
+  // Declares that actions should be cached.
+  "has_and_belongs_to_many": {
+    "type":       "caches_action",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // load_resource
+  "has_and_belongs_to_many": {
+    "type":       "load_resource",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  // render_to_string
+  // http://railsdoc.com/references/render_to_string
+  "render_to_string": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+
+  // http://api.rubyonrails.org/classes/ActionController/Head.html
+  "head": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "send": {
+    "type":       "TODO_rails_command",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+
+  // http://ref.xaio.jp/ruby/classes/module/attr_accessor
+  "has_and_belongs_to_many": {
+    "type":       "attr_reader",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+  "has_and_belongs_to_many": {
+    "type":       "attr_accessor",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+
+  // API:  http://apidock.com/rails/ActionView/Helpers/CaptureHelper/content_for
+  // TEST: spec/rails/command/content_for_spec/rb
+  "content_for": {
+     "type":        "alias",
+     "subtype":     "non-supported",
+     "providedby":  "rails",
+     "remidiation": "TBD",
+     "severity":    1
+  }
+}

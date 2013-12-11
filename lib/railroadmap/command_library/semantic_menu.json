@@ -1,0 +1,15 @@
+// semantic_menu
+// https://github.com/danielharan/semantic-menu
+{
+  "semantic_menu": {
+    "type": "input_dataflow",  // same as form_for, form_tag
+    "subtype":    "form",
+    "providedby": "semantic_menu"
+  },
+  "add": {                   // link_to
+    "type": "transition",
+    "subtype":    "link_to",
+    "providedby": "semantic_menu"
+  }
+}
+

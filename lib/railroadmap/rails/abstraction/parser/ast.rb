@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 require 'sorcerer'
+require 'json'
 
 module Abstraction
   module Parser
@@ -345,9 +346,9 @@ module Abstraction
             a.each do |aa|
               n = aa[1][1][1]
               h[n] = true
-             end
-           end
-         end
+            end
+          end
+        end
         h
       end
 
@@ -860,7 +861,7 @@ module Abstraction
 
       # Add command list
       # comand hash => $abst_commands[k]
-      # TODO: cleanup
+      # TODO: migrate to JSON
       def add_command_list(command_list)
         command_list.each do |k, v|
           type       = v[:type]
@@ -899,6 +900,50 @@ module Abstraction
         end  # each
       end
 
+      # JSON
+      def add_json_command_list(filename)
+        command_list = nil
+        open(filename) do |io|
+          command_list = JSON.load(io)
+        end
+        # pp command_list
+        command_list.each do |k, v|
+          type       = v["type"]
+          providedby = v["providedby"] || 'app'
+          if $abst_commands[k].nil?
+            if type == 'transition'
+              c = add_trans_command_to_list(k, v["subtype"])
+              c.transition_path = v["transition_path"]   # Force path
+              c.providedby      = providedby
+            elsif type == 'filter' then
+              $log.debug "init_commands() - TODO: add app filter command #{k}"
+              c = Abstraction::Command.new
+              c.name       = k
+              c.type       = type
+              c.is_sf      = v["is_sf"]
+              c.sf_type    = v["sf_type"] if c.is_sf == true
+              c.providedby = providedby
+              c.status     = 'beta'
+              # DST
+              # copy dst table => extracted by compleate_filter()
+              c.dst_table = v["dest_list"] unless v["dest_num"].nil?
+              $abst_commands[c.name] = c
+            else
+              c = Abstraction::Command.new
+              c.name = k
+              c.type = type
+              c.subtype = v["subtype"] unless v["subtype"].nil?
+              c.providedby = providedby
+              c.status = 'TODO'
+              $abst_commands[c.name] = c
+            end
+          else
+            $log.error "add_json_command_list() - command/filter '#{k}' already exist"
+            fail "DEBUG"
+          end  # nil
+        end  # each
+      end
+
       def add_command_to_list(classobj)
         if $abst_commands[classobj.name].nil?
           $abst_commands[classobj.name] = classobj
@@ -921,6 +966,7 @@ module Abstraction
         return cc1
       end
 
+      # TODO: delete
       def add_dataflow_command_to_list(name, subtype, is_inbound, is_outbound)
         c = Abstraction::Command.new
         c.name         = name

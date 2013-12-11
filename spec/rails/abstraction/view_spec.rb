@@ -2,69 +2,51 @@
 #
 # TODO: v010 => v02X
 #
-require 'rubygems'
-require 'rspec'
+#  rspec --color spec/rails/abstraction/view_spec.rb
 
-require 'railroadmap/rails/abstraction'
-require 'railroadmap/errors.rb'
-
-require 'pp'
-
-# DEBUG
-require 'tracer'
-# Tracer.on
-
-# Logging
-require 'logger'
-$log = Logger.new(STDOUT)
-$log.level = Logger::ERROR
-$log.formatter = proc do |severity, datetime, progname, msg|
-  if severity == 'ERROR' || severity == 'INFO' || severity == 'DEBUG'
-    position = caller.at(4).sub(%r{.*/}, '').sub(%r{:in\s.*}, '')
-    "#{severity} #{position} #{msg}\n"
-  else
-    "#{severity} #{msg}\n"
-  end
-end
+require 'spec_helper'
 
 describe Abstraction::Parser::View do
 
-  # Setup
-  it ": create global hash tables" do
-    $abst_states = Hash.new
-    $abst_transitions = Hash.new
-    $abst_variables = Hash.new
-    $abst_dataflows = Hash.new
-    $route_map = {}
-    $list_class = {}
-    $abst_commands = {}
-    $unknown_command = 0
-    $abst_transitions_count = 0
-    $abst_dataflows_count = 0
-    $errors ||= Errors.new
-  end
+  it ": init railroadmap" do
+    init_railroadmap
+    $apv = Abstraction::Parser::View.new
+    $apv.add_json_command_list('./lib/railroadmap/command_library/rails.json')
+    # $apv.add_json_command_list('./lib/railroadmap/command_library/simple_form.json')
+    # $apv.add_json_command_list('./lib/railroadmap/command_library/semantic_menu.json')
 
-  it ": set global flags" do
-    $protect_from_forgery = false
-    $verbose = 0
-    $debug = false
-    $robust = false
+    # dummy states
+    sc1 = $apv.add_state('controller', 'task#create', nil)
+    sc2 = $apv.add_state('controller', 'task#update', nil)
   end
 
   it ": Load the View (ERB) file and create abstraction model" do
     # $debug = true
-    # variables
+
+    $abst_transitions.size.should eq 0
+
+    # setup variables from schema
     s1 = Abstraction::Parser::ModelSchema.new
     s1.load('./spec/rails/abstraction/sample/db/schema.rb')
 
-    #
+    # V_task#index
     v1 = Abstraction::Parser::View.new
     v1.load('task', "./spec/rails/abstraction/sample/app/views/tasks/index.html.erb")
     # v1.abstract
+    # V_task#index --link_to new_task_path
+    # V_task#index --link_to task.title.presence || '-- No Title! --', task, :class => 'url'
+    # V_task#index --link_to tag.name, tag, 'rel' => 'tag'
+    # V_task#index --form_for/submit   switch_to_task_path
+
+    # list_transisions
+    $abst_transitions.size.should eq 4
 
     v2 = Abstraction::Parser::View.new
     v2.load('task', "./spec/rails/abstraction/sample/app/views/tasks/new.html.erb")
     # v2.abstract
+
+    # list_transisions
+    $abst_transitions.size.should eq 6
 
     v3 = Abstraction::Parser::View.new
     v3.load('task', "./spec/rails/abstraction/sample/app/views/tasks/show.html.erb")
@@ -93,9 +75,13 @@ describe Abstraction::Parser::View do
     end
 
     # check
-    $abst_states.size.should eq 9
+    $abst_states.size.should eq 11
+
+    # pp $abst_transitions
+    # list_transisions
     # $abst_transitions.size.should eq 16
-    $abst_transitions.size.should eq 2
+    $abst_transitions.size.should eq 19
+
   end
 
   it ": compleate the abstraction model" do
@@ -144,8 +130,8 @@ describe Abstraction::Parser::View do
       end
     end
     # check
-    $abst_states.size.should eq 9
+    $abst_states.size.should eq 11
     # v010 $abst_transitions.size.should eq 16
-    $abst_transitions.size.should eq 2
+    $abst_transitions.size.should eq 19
   end
 end

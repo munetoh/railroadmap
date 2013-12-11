@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "railroadmap"
-  s.version = "0.2.0"
+  s.version = "0.2.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Seiji Munetoh"]
-  s.date = "2013-11-04"
+  s.date = "2013-12-11"
   s.description = "TBD"
   s.email = "seiji.munetoh@gmail.com"
   s.executables = ["railroadmap"]
@@ -29,6 +29,11 @@ Gem::Specification.new do |s|
     "bin/railroadmap",
     "lib/railroadmap.rb",
     "lib/railroadmap/cli.rb",
+    "lib/railroadmap/command_library/rails.json",
+    "lib/railroadmap/command_library/ruby.json",
+    "lib/railroadmap/command_library/semantic_menu.json",
+    "lib/railroadmap/command_library/simple_form.json",
+    "lib/railroadmap/command_library/unknown.json",
     "lib/railroadmap/config-file.rb",
     "lib/railroadmap/dashboard.rb",
     "lib/railroadmap/errors.rb",
@@ -145,6 +150,8 @@ Gem::Specification.new do |s|
     "spec/rails/abstraction/sample/db/schema.rb",
     "spec/rails/abstraction/testenv.rb.sample",
     "spec/rails/abstraction/view_spec.rb",
+    "spec/rails/commands/content_for_spec.rb",
+    "spec/rails/commands/form_for_spec.rb",
     "spec/spec_helper.rb"
   ]
   s.homepage = "http://github.com/munetoh/railroadmap"

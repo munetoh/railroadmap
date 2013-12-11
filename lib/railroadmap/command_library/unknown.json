@@ -1,0 +1,68 @@
+// Unknown command
+// TODO: classify them
+{
+  // TODO
+  // ActiveSupport::Deprecation.warn
+  // http://api.rubyonrails.org/classes/ActiveSupport/Deprecation.html
+  // http://d.hatena.ne.jp/kitokitoki/20110507/p1
+  "warn": {
+    "type":       "unknown",
+    "providedby": "unknown",
+    "status":     "todo"
+  },
+  // select
+  // http://railsdoc.com/references/select
+  "select": {
+    "type":       "unknown",
+    "providedby": "unknown",
+    "status":     "todo"
+  },
+  // radio_button
+  // http://railsdoc.com/references/radio_button
+  // TODO: skip?
+  "radio_button": {
+    "type":       "unknown",
+    "providedby": "unknown",
+    "status":     "todo"
+  },
+  // cycle
+  // http://railsdoc.com/references/cycle
+  // TODO: skip?
+  "cycle": {
+    "type":       "unknown",
+    "providedby": "unknown",
+    "status":     "todo"
+  },
+  // fields_for
+  // http://railsdoc.com/references/fields_for
+  // Block -> variable -> POST
+  "fields_for": {
+    "type":       "unknown",
+    "providedby": "unknown",
+    "status":     "todo"
+  },
+  // error_messages_for
+  // Model error -> view
+  // http://apidock.com/rails/ActionView/Helpers/ActiveRecordHelper/error_messages_for
+  "error_messages_for": {
+    "type":       "unknown",
+    "providedby": "unknown",
+    "status":     "todo"
+  },
+  // in_place_editor
+  // OLD
+  // http://apidock.com/rails/ActionView/Helpers/JavaScriptMacrosHelper/in_place_editor_field
+  "in_place_editor": {
+    "type":       "unknown",
+    "providedby": "unknown",
+    "status":     "todo"
+  },
+  // send_file
+  // http://railsdoc.com/references/send_file
+  // download file
+  "send_file": {
+    "type":       "unknown",
+    "providedby": "unknown",
+    "status":     "todo"
+  }
+}

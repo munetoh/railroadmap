@@ -2,43 +2,15 @@
 #
 # TODO: v010 => v02X
 #
+#  rspec --color spec/rails/abstraction/model_spec.rb
 
-require 'rubygems'
-require 'rspec'
-
-require 'railroadmap/rails/abstraction'
-
-# Logging
-require 'logger'
-$log = Logger.new(STDOUT)
-$log.level = Logger::ERROR
-$log.formatter = proc do |severity, datetime, progname, msg|
-  if severity == 'ERROR' || severity == 'INFO' || severity == 'DEBUG'
-    position = caller.at(4).sub(%r{.*/}, '').sub(%r{:in\s.*}, '')
-    "#{severity} #{position} #{msg}\n"
-  else
-    "#{severity} #{msg}\n"
-  end
-end
+require 'spec_helper'
 
 describe Abstraction::Parser::Model do
-
-  it ": setup" do
-    $abst_states = Hash.new
-    $abst_transitions = Hash.new
-    $abst_variables = Hash.new
-    $abst_dataflows = Hash.new
-    $route_map = {}
-    $list_class = {}
-    $abst_commands = {}
-    $unknown_command = 0
-    $abst_transitions_count = 0
-    $abst_dataflows_count = 0
-    # $errors ||= Errors.new
-
-    $robust  = false
-    $debug = false
-    $verbose = 0
+  it ": init railroadmap" do
+    init_railroadmap
+    $apv = Abstraction::Parser::View.new
+    $apv.add_json_command_list('./lib/railroadmap/command_library/rails.json')
   end
 
   it ": Load the model files (db,app/models)" do

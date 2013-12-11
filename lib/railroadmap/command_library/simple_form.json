@@ -1,0 +1,9 @@
+// simple_form
+// https://github.com/plataformatec/simple_form
+{
+  "simple_form_for": {
+     "type":       "input_dataflow",  // form_for form_tag
+     "subtype":    "form",
+     "providedby": "simple_form"
+  }
+}

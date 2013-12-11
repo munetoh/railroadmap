@@ -10,12 +10,7 @@
 #
 # rspec --color spec/rails/abstraction/ruby_spec.rb
 #
-require 'rubygems'
-require 'rspec'
-
-require 'railroadmap/rails/abstraction'
-require 'pp'
-# require './testenv'
+require 'spec_helper'
 
 describe Abstraction::Parser::View do
 

@@ -1,29 +1,11 @@
 # -*- coding: UTF-8 -*-
 #  rspec --color spec/rails/abstraction/block_spec.rb
 
-require 'rubygems'
-require 'rspec'
-require 'pp'
-
-require 'railroadmap/rails/abstraction'
-
-# Logging
-require 'logger'
-$log = Logger.new(STDOUT)
-$log.level = Logger::ERROR
-$log.formatter = proc do |severity, datetime, progname, msg|
-  if severity == 'ERROR' || severity == 'INFO' || severity == 'DEBUG'
-    position = caller.at(4).sub(%r{.*/}, '').sub(%r{:in\s.*}, '')
-    "#{severity} #{position} #{msg}\n"
-  else
-    "#{severity} #{msg}\n"
-  end
-end
+require 'spec_helper'
 
 # DEBUG
 # require 'tracer'
 # Tracer.on
-
 
 describe Abstraction::Block do
 
@@ -37,8 +19,8 @@ describe Abstraction::Block do
 
   it ": create global variables" do
     $verbose = 0
-    #$verbose = 1
-    #$verbose = 3
+    # $verbose = 1
+    # $verbose = 3
     $robust = false
   end
 
@@ -51,10 +33,8 @@ describe Abstraction::Block do
     # variables
     p.add_variable('model',     'task',      'obj',    'app/model/task.rb')
     p.add_variable('model_att', 'task#name', 'string', 'model/hoge.rb')
-    
     p.add_variable('devise', 'sign_in', 'boolean', 'model/hoge.rb')
     p.add_variable('devise', 'current_user', 'boolean', 'model/hoge.rb')
-    
     p.add_variable('controller', 'user#new#@user', 'obj', 'app/controller/users_controller.rb')
     p.add_variable('controller', 'user#create#@user', 'obj', 'app/controller/users_controller.rb')
     p.add_variable('controller', 'user#edit#@user', 'obj', 'app/controller/users_controller.rb')
@@ -73,22 +53,22 @@ describe Abstraction::Block do
 
   it ": create child do block object" do
     ruby = "task.each"
-    sexp = Ripper::sexp(ruby)
+    sexp = Ripper.sexp(ruby)
     $block = $block.add_child('do', sexp, nil)
-  end  
-    
+  end
+
   it ": create child if block object" do
     ruby = "sign_in"
-    sexp = Ripper::sexp(ruby)
+    sexp = Ripper.sexp(ruby)
     $block = $block.add_child('if', sexp, nil)
-  end  
+  end
 
   it ": create other elsif block object" do
     ruby = "user == \"hoge\""
-    sexp = Ripper::sexp(ruby)
+    sexp = Ripper.sexp(ruby)
     $block.add('elsif', sexp, nil)
-  end  
-  
+  end
+
   it ": create other else block object" do
     $block.add('else', nil, nil)
   end
@@ -106,19 +86,19 @@ describe Abstraction::Block do
   end
 
   it ": print" do
-    if $verbose > 0 then
+    if $verbose > 0
       puts ''
       puts "Variables"
-      $abst_variables.each do |n,v|
+      $abst_variables.each do |n, v|
         v.print
       end
       puts "Transitions"
-      $abst_transitions.each do |n,v|
+      $abst_transitions.each do |n, v|
         v.print
       end
-      #$verbose = 2
+      # $verbose = 2
       puts "Dataflows[#{$abst_dataflows.size}]"
-      $abst_dataflows.each do |n,v|
+      $abst_dataflows.each do |n, v|
         v.print
       end
       puts "Blocks"
@@ -133,12 +113,12 @@ describe Abstraction::Block do
     $block2_root = Abstraction::Block.new
     $block2_root.type = 'root'
     $block2_root.id = 'C_user#update_R'
-    $block2 = $block2_root  # set current block,  => root   
+    $block2 = $block2_root  # set current block,  => root
   end
 
   it ": create child if block object" do
     ruby = "@user.update_attributes(params[:user])"
-    sexp = Ripper::sexp(ruby)
+    sexp = Ripper.sexp(ruby)
     $block2 = $block2.add_child('if', sexp, nil)
   end
 
