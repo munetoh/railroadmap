@@ -29,4 +29,8 @@ class Errors
     @severity3_count += 1 if e['severity'] == 3
     @errors[key] = e
   end
+
+  def size
+    return @errors.size
+  end
 end

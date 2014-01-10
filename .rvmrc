@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Based on: http://rvm.beginrescueend.com/workflow/rvmrc/
 
-ruby_string="ruby-1.9.2-p290"
+ruby_string="ruby-1.9.3-p448"
 gemset_name="railroadmap"
 
 if rvm list strings | grep -q "${ruby_string}" ; then

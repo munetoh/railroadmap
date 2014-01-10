@@ -1,0 +1,71 @@
+<div class="dashboard_container" id="<%= title.gsub(/[^a-zA-Z]/, '') %>">
+  <h2>
+    <span class="group_name"><%= title %></span>
+    (<span class="covered_percent"><span class="<%= warning_css_class(total_error_count) %>">
+    <%= total_error_count %>
+    </span></span>
+     errors)
+  </h2>
+  <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
+
+
+  <h3> </h3>
+  <h3> 
+    RailroadMap Errors
+    (<span class="covered_percent"><span class="<%= errors_css_class(railroadmap_errors_count) %>">
+    <%= railroadmap_errors_count %>
+    </span></span>
+     errors)
+  </h3>
+  <table class="errors_list">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Severity</th>
+        <th>Type</th>
+        <th>Message</th>
+        <th>Remidiation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% errors.each do |key, error| %>
+          <tr class="<%= errors_css_tr_class(error['severity'])%>">
+            <td><%= key %></td>
+            <td><%= error['severity'] %></td>
+            <td><%= error['error_type'] %></td>
+            <td><%= error['message'] %></td>
+            <td><%= error['remidiation'] %></td>
+          </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+
+  <h3> </h3>
+  <h3> 
+    Brakeman Errors
+    (<span class="covered_percent"><span class="<%= warning_css_class(brakeman_error_count) %>">
+    <%= brakeman_error_count %>
+    </span></span>
+     errros) 
+  </h3>
+  <table class="brakeman_warning_list">
+    <thead>
+      <tr>
+        <th>Message</th>
+        <th>Location</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% $brakeman.errors.each do |error| %>
+      <tr class="<%= errors_css_tr_class(2)%>">
+        <td><%= error['error'] %></td>
+        <td><%= error['location'] %></td>
+      </tr>
+      <% end %>
+    </tbody>
+  </table>
+  Update:
+  $ gem update brakeman<br>
+  $ brakeman -f json > brakeman.json<br>
+</div>

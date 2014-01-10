@@ -8,14 +8,22 @@
   </h2>
   <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
 
-
   <h3> </h3>
-  <h3> 
+  <h3>
     RailroadMap Warnings
-    (<span class="covered_percent"><span class="<%= warning_css_class(railroadmap_warning_count) %>">
-    <%= railroadmap_warning_count %>
-    </span></span>
-     warnings) 
+    (<span class="covered_percent">
+       <span class="<%= warning_css_class(railroadmap_warning_count) %>">
+         <%= railroadmap_warning_count %>
+       </span>
+     </span>
+     warnings,
+     <span class="covered_percent">
+       <span class="<%= warning_css_class(railroadmap_fp_warning_count) %>">
+         <%= railroadmap_fp_warning_count %>
+       </span>
+     </span>
+     True-Positive warnings,
+     )
   </h3>
   <table class="warning_list">
     <thead>
@@ -25,34 +33,37 @@
         <th>Type</th>
         <th>Message</th>
         <th>file</th>
-        <th>line</th>
+        <!-- <th>line</th>
         <th>NavModel(state)</th>
-        <th>NavModel(variable)</th>
+        <th>NavModel(variable)</th> -->
         <th>Test type</th>
         <th>Test result</th>
+        <th>Comments</th>
       </tr>
     </thead>
     <tbody>
       <% warnings.each do |key, warning| %>
         <% if warning['confidence'] != 'FalsePositive' %>
-          <tr class="<%= unclear_css_class(warning['test_result'] == 'True-positive') %>">
+          <tr class="<%= unclear_css_class(warning['comment'] == 'True-Positive') %>">
             <!--<td>RRMW<%= "%04d" % warning['id'] %></td>-->
             <td><%= key %></td>
             <td><%= warning['confidence'] %></td>
             <td><%= warning['warning_type'] %></td>
             <td><%= warning['message'] %></td>
             <td><%= warning['file2'] %></td>
-            <td><%= warning['line'] %></td>
+            <!-- <td><%= warning['line'] %></td>
             <td><%= warning['hit_state'] %></td>
-            <td><%= warning['hit_variable'] %></td>
+            <td><%= warning['hit_variable'] %></td> -->
             <td><%= warning['test_type'] %></td>
             <td><%= warning['test_result'] %></td>
+            <td><%= warning['comment'] %></td>
           </tr>
         <% end %>
       <% end %>
     </tbody>
   </table>
 
+<!--
   <h3> </h3>
   <h3> RailroadMap Supressed Warnings (FalsePositive)</h3>
   <table class="fp_warning_list">
@@ -79,37 +90,7 @@
       <% end %>
     </tbody>
   </table>
-
-  <h3> </h3>
-  <h3> 
-    RailroadMap Errors
-    (<span class="covered_percent"><span class="<%= errors_css_class(railroadmap_errors_count) %>">
-    <%= railroadmap_errors_count %>
-    </span></span>
-     errors)
-  </h3>
-  <table class="errors_list">
-    <thead>
-      <tr>
-        <th>Id</th>
-        <th>Severity</th>
-        <th>Type</th>
-        <th>Message</th>
-        <th>Remidiation</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% errors.each do |key, error| %>
-          <tr class="<%= errors_css_tr_class(error['severity'])%>">
-            <td><%= key %></td>
-            <td><%= error['severity'] %></td>
-            <td><%= error['error_type'] %></td>
-            <td><%= error['message'] %></td>
-            <td><%= error['remidiation'] %></td>
-          </tr>
-      <% end %>
-    </tbody>
-  </table>
+-->
 
   <h3> </h3>
   <h3> 
@@ -133,7 +114,7 @@
       </tr>
     </thead>
     <tbody>
-      <% brakeman_warnings.each do |warning| %>
+      <% $brakeman.warnings.each do |warning| %>
       <tr>
         <td>BMW <%= warning['id'] %></td>
         <td><%= warning['confidence'] %></td>
@@ -147,6 +128,7 @@
       <% end %>
     </tbody>
   </table>
-  <h3> </h3>
-  <h3> Brakeman Errors (TBD)</h3>
+  Update:
+  $ gem update brakeman<br>
+  $ brakeman -f json > brakeman.json<br>
 </div>

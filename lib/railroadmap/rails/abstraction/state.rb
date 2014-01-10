@@ -558,23 +558,12 @@ module Abstraction
         end
       end
 
-      c_count = 0
-      $abst_states.each do |k, c|
-        if c.type == 'controller' && c.model == model
-          # Hit
-          action = c.action
-          c_count += 1
-          if c.code_policy.is_authenticated
-            @code_policy.authenticated_action_list << action
-          else
-            @code_policy.no_authenticated_action_list << action
-          end
+      c_count = update_action_list(model)
 
-          if c.code_policy.is_authorized
-            @code_policy.authorized_action_list << action
-          else
-            @code_policy.no_authorized_action_list << action
-          end
+      # check alias
+      unless model_alias.nil?
+        model_alias.each do |m, v|
+          c_count += update_action_list(m, m)
         end
       end
 
@@ -602,5 +591,33 @@ module Abstraction
         return 0
       end
     end
+
+    def update_action_list(model, cname = nil)
+      c_count = 0
+      $abst_states.each do |k, c|
+        if c.type == 'controller' && c.model == model && c.routed
+          # Hit
+          if cname.nil?
+            action = c.action
+          else
+            action = cname + '#' + c.action
+          end
+          c_count += 1
+          if c.code_policy.is_authenticated
+            @code_policy.authenticated_action_list << action
+          else
+            @code_policy.no_authenticated_action_list << action
+          end
+
+          if c.code_policy.is_authorized
+            @code_policy.authorized_action_list << action
+          else
+            @code_policy.no_authorized_action_list << action
+          end
+        end
+      end
+      return c_count
+    end
+
   end
 end

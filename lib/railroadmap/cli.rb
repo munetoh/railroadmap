@@ -41,7 +41,10 @@ require 'railroadmap/rails/pdp'
 
 require 'railroadmap/rails/requirement'
 require 'railroadmap/rails/security-check'
+require 'railroadmap/rails/acceptance-test'
 require 'railroadmap/rails/cucumber'
+require 'railroadmap/rails/gems'
+require 'railroadmap/brakeman'
 
 # DEBUG w/ Tracer
 require 'tracer'
@@ -56,6 +59,7 @@ module Railroadmap
       $verbose = 0
       $robust = false
       $step_count = 0
+      $enable_stdout = true
 
       # Check Option
       lastarg = nil
@@ -75,6 +79,8 @@ module Railroadmap
             init         initialize
             genmodel     generate navigation and dataflow model
             sectest      run static security test (default)
+            genuat       generate user acceptance test for security functions
+            gensam       generate Security Assuarance Model w/ UAT results
 
           Options:
         BANNER
@@ -121,12 +127,33 @@ module Railroadmap
         options[:dashboard] = true
       elsif lastarg[0] == 'sectest' # Run Static Test
         options[:navmodel]  = true
+        options[:loadreq]   = true
         options[:runsc]     = true
         options[:brakeman]  = true
         options[:smodel]    = true
         options[:genpdp]    = true
         options[:dashboard] = true
         options[:command]   = true  # for DEBUG
+      elsif lastarg[0] == 'genuat' # Gen User Acceptance Test
+        options[:navmodel]  = true
+        options[:loadreq]   = true
+        options[:runsc]     = true
+        options[:brakeman]  = true
+        options[:smodel]    = true
+        options[:genpdp]    = true
+        options[:cucumber_init]    = true
+        options[:cucumber_genuat]  = true  # UAT gen
+        options[:dashboard] = true
+      elsif lastarg[0] == 'gensam' # Gen Security Assurance Model
+        options[:navmodel]  = true
+        options[:loadreq]   = true
+        options[:runsc]     = true
+        options[:brakeman]  = true
+        options[:smodel]    = true
+        options[:genpdp]    = true
+        options[:cucumber_init]    = true
+        options[:cucumber_result]  = true  # check result
+        options[:dashboard] = true
       else
          # bad command?
         stdout.puts "bad command #{lastarg[0]}"
@@ -163,14 +190,11 @@ module Railroadmap
       abstraction_file  = $approot_dir + '/railroadmap/abstraction.rb'
       abstraction_fix   = $approot_dir + '/railroadmap/abstraction_fix'
 
-      requirements_req  = $approot_dir + '/railroadmap/requirements'
-      requirements_file = $approot_dir + '/railroadmap/requirements.rb'
-      # requirements_fix  = $approot_dir + '/railroadmap/requirements_fix'
+      requirements_file = $approot_dir + '/railroadmap/requirements.json'
+      testplan_file     = $approot_dir + '/railroadmap/testplan.json'
 
       blankmap_file       = railroadmap_dir + '/blankmap.json'
-      # blankmap_table_file = railroadmap_dir + '/blankmap_table.html'
       hazardmap_file      = railroadmap_dir + '/hazardmap.json'
-
       securitycheck_file  = railroadmap_dir + '/securitycheck.json'
 
       brakeman_file = $approot_dir + '/brakeman.json'  # TODO
@@ -320,6 +344,10 @@ module Railroadmap
           exit
         end
 
+        # check Gems
+        $gems = Rails::Gems.new
+        $gems.init
+
         # $route_map => $path2id
         # add XXX_url, XXX_path, @XXXX
         # $path2id will be provided by railroadmap/abstract.rb
@@ -355,28 +383,6 @@ module Railroadmap
           if $authentication == 'devise'
             require 'railroadmap/rails/devise'
             $authentication_module = Rails::Devise.new
-
-            # TODO: add devise path, => set by conf
-            $path2id['new_session_path']  = 'C_devise:session#new'    # user_session
-            $path2id['new_password_path'] = 'C_devise:password#new'  # user_password
-            $path2id['new_registration_path']   = 'C_devise:registration#new'  # user_registration
-            $path2id['edit_registration_path']   = 'C_devise:registration#edit'
-
-            $path2id['edit_password_url']   = 'C_devise:password#edit'
-
-            # TODO: tentative
-            $path2id['after_sign_out_path_for']   = 'C_devise:session#new'
-            $path2id['after_unlock_path_for']   = 'C_devise:session#new'
-            $path2id['after_omniauth_failure_path_for']   = 'C_devise:session#new'
-            $path2id['after_confirmation_path_for']   = 'C_devise:session#new'
-            $path2id['omniauth_authorize_path']   = 'C_devise:session#new'
-            $path2id['new_confirmation_path']   = 'C_devise:session#new'
-            $path2id['confirmation_url']   = 'C_devise:session#new'
-            $path2id['new_unlock_path']   = 'C_devise:session#new'
-            $path2id['unlock_url']   = 'C_devise:session#new'
-
-            # "Cancel my account", registration_path(resource_name, ), :data => {:confirm => "Are you sure?"}, :method => :delete,
-            $path2id['registration_path']   = 'C_devise:session#new'  # TODO: tentative
           elsif $authentication == 'authlogic'
             require 'railroadmap/rails/authlogic'
             $authentication_module = Rails::Authlogic.new
@@ -421,13 +427,14 @@ module Railroadmap
           end
         end
 
-        # load the MVC code
+        # load the MVC code (OLD, v010)
         unless $approot_list.nil?
           $log.error "20131007 config.rb format was changed. $approot_list => $approot_hash"
           $abst = Abstraction::MVC.new
           $abst.init_by_approot_list($approot_list)
         end
 
+        # load the MVC code (New, v020)
         unless $approot_hash.nil?
           $abst = Abstraction::MVC.new
           $abst.init_by_approot_hash($approot_hash)
@@ -435,7 +442,7 @@ module Railroadmap
 
         fail "define $approot_hash in rairoadmap/config.rb" if $abst.nil?
 
-        # Parse the MVC code
+        # Parse the all MVC code
         $abst.load
 
         # [Manual] Add transitions
@@ -501,9 +508,10 @@ module Railroadmap
         $abst.complete_filter
         # refine transition
         $abst.complete_transition
+        # check transition
+        $abst.check_transitions
 
         # TODO: set guard filter flag?
-
         # refine PEP
         $authentication_module.compleate_pep_assignment
         $authorization_module.compleate_pep_assignment
@@ -521,30 +529,13 @@ module Railroadmap
           puts "      BF trans.    : #{$filter_added_trans_count} are not added for runsc"
         end
 
-        #----------------------------------------------------------------------
-        # load requirements
-        puts ""
-        puts "Step #{$step_count}: Load requirements (Policy injection)"
-        $step_count += 1
-
-        $req = Rails::Requirement.new
-        $req.load(requirements_req, requirements_file)
-
-        #-----------------------------------------------------------------------
-        # generate Table in HTML
-
-        if $warning.nil?
-          print "\e[32m"  # green
-          puts "    warnings       : 0"
+        size = $errors.size
+        if size > 0
+          print "\e[31m"  # red
+          puts "    errors         : #{size}"
         else
-          size = $warning.size
-          if size > 0
-            print "\e[31m"  # red
-            puts "    warnings       : #{size}"
-          else
-            print "\e[32m"  # green
-            puts "    warnings       : #{size}"
-          end
+          print "\e[32m"  # green
+          puts "    errors         : #{size}"
         end
         print "\e[0m" # reset
       end  # Blankmap
@@ -666,6 +657,32 @@ module Railroadmap
       # Static : Security Check on NavModel
       #  * check compleatness of Access control implementation
       #
+      if options[:loadreq]
+        #----------------------------------------------------------------------
+        # load requirements
+        puts ""
+        puts "Step #{$step_count}: Load requirements (Policy injection)"
+        $step_count += 1
+
+        $req = Rails::Requirement.new
+        $req.load(requirements_file)
+
+        if $warning.nil?
+          print "\e[32m"  # green
+          puts "    warnings       : 0"
+        else
+          size = $warning.size
+          if size > 0
+            print "\e[31m"  # red
+            puts "    warnings       : #{size}"
+          else
+            print "\e[32m"  # green
+            puts "    warnings       : #{size}"
+          end
+        end
+        print "\e[0m" # reset
+      end
+
       if options[:runsc]
         #-----------------------------------------------------------------------
         # generate security check report in JSON (Brakeman format)
@@ -674,17 +691,19 @@ module Railroadmap
         puts "Step #{$step_count}: Run security check (access control) againt navigation model (1st check)"
         $step_count += 1
 
-        sc = Rails::SecurityCheck.new
-        sc.save_json(securitycheck_file)
-        puts "    Security check(#{securitycheck_file}) was generated"
+        sc = Rails::SecurityCheck.new # run static analysis
 
+        puts "    Static security test (XSS trace)"
         $xss.trace_raw
         $warning.update_file2($approot_dir, '.')
+
+        sc.save_json(securitycheck_file)
+        puts "    Security check(#{securitycheck_file}) was generated"
 
         if $warning.count > 0 || $verbose > 0
           # show Policy map
           # railroadmap/rails/requirement.rb
-          $req.print_policy_assignment
+          $req.print_policy_assignment if $access_control_warning_count > 0
         end
       end
 
@@ -697,7 +716,7 @@ module Railroadmap
       #                       blank map  -> hazard map (Abuse model)
       #
       #   $ railroadmap blankmap   => blankmap.json
-      #   $ brakeman -o brakeman.json
+      #   $ brakeman -f json > brakeman.json
       #   $ railroadmap brakeman   => hazardmap.json
       #
       # TODO: move to lib/brakeman.rb
@@ -706,100 +725,28 @@ module Railroadmap
         puts ""
         puts "    load brakeman report (#{brakeman_file})"
         # TODO: check blankmap is ready or not
-        brakeman_hash = nil
+        # brakeman_hash = nil
         begin
-          open(brakeman_file, 'r') { |fp| brakeman_hash = JSON.parse(fp.read) }
-
-          # scan_info = brakeman_hash['scan_info']
-          warnings = brakeman_hash['warnings']
-          errors = brakeman_hash['errors']
-          # to Dashboard
-          $brakeman_warnings = warnings
-
-          if warnings.size > 0
-            print "\e[31m"  # red
-            puts "    warnings : #{warnings.size}"
-            print "\e[0m" # reset
-          else
-            print "\e[32m"  # green
-            puts "    warnings : #{warnings.size}"
-            print "\e[0m" # reset
-          end
-
-          if errors.size > 0
-            print "\e[31m"  # red
-            puts "    errors   : #{errors.size}"
-            print "\e[0m" # reset
-          else
-            print "\e[32m"  # green
-            puts "    errors   : #{errors.size}"
-            print "\e[0m" # reset
-          end
-
-          hit_state_count = 0
-          id = 0
-          warnings.each do |w|
-            # copy
-            type    = w['warning_type']
-            message = w['message']
-            file    = w['file']
-            line    = w['line']
-
-            # add attribute to brakeman warning
-            w['id'] = id
-            id += 1
-            w['hit_state'] = ''
-            w['hit_variable'] = ''
-            # shorten filename, remove $approot_dir
-            w['file2'] = file.sub($approot_dir, '.')
-
-            if $verbose == 1
-              puts "    id       : #{id}"
-              puts "    type    : #{type}"
-              puts "    message : #{message}"
-            end
-
-            # TODO: controller has multiple def (=states) => use line# to identify the exact state.
-            # TODO: use hash to fined states?
-            hit_state = nil
-            $abst_states.each do |k, state|
-              state.filename.each do |f|
-                if f == file
-                  if state.start_linenum < line
-                    # last hit is the state we are looking for.
-                    hit_state = state
-                  end
-                end
-              end
-            end
-            unless hit_state.nil?
-              # Set flag to the state
-              mark = Abstraction::Mark.new('brakeman')
-              mark.brakeman(type, message, line)
-              hit_state.add_mark(mark)
-              # Update attribute to brakeman warning
-              w['hit_state'] = hit_state.id
-              hit_state_count += 1
-            end
-          end
-          puts "    Total #{hit_state_count} State Hits"
+          $brakeman = Brakeman.new
+          $brakeman.load_json_result(brakeman_file)
+          $brakeman.set_hazard_map
+          $brakeman.update_gems
+          $brakeman.print_stat
         rescue
-          $log.error "Brakeman"
           print "\e[31m"  # red
-          puts " run brakeman "
-          puts " $ brakeman -f json > brakeman.json"
+          puts "    missing brakeman report, run brakeman"
+          puts "      $ gem update brakeman                (OPTION)"
+          puts "      $ brakeman -f json > brakeman.json"
           print "\e[0m" # reset
         end
-
         # Save to JSON
-        date = Time.now
-        m = Map.new(date.to_s)
-        m.states = $abst_states
-
-        File.open(hazardmap_file, 'w') do |f|
-          f.write(JSON.pretty_generate(m))
-        end
-        puts "    Hazard map(#{hazardmap_file}) was generated"
+        # date = Time.now
+        # m = Map.new(date.to_s)
+        # m.states = $abst_states
+        # File.open(hazardmap_file, 'w') do |f|
+        #   f.write(JSON.pretty_generate(m))
+        # end
+        # puts "    Hazard map(#{hazardmap_file}) was generated"
       end
 
       # Static Analysis Summary => Security Assuarance Model
@@ -819,6 +766,55 @@ module Railroadmap
         $step_count += 1
 
         $authorization_module.generate_pdp(nil) unless $authorization_module.nil?
+      end
+
+      ##########################################################################
+      # Generate UAT run by cucumber
+      at = nil
+      if options[:cucumber_init]
+        puts ""
+        puts "Step #{$step_count}: Init security testcase (cucumber)"
+        $step_count += 1
+
+        # test_selection
+        puts "    prepare test selection"
+        $at = Rails::Cucumber.new
+        tc = $at.init_test_selection
+
+        puts "    load testplan"
+        $at.load_testplan(testplan_file)
+
+        # check
+        puts "    check"
+        $at.print_remidiations if $at.check_test_selection == false
+      end
+
+      if options[:cucumber_genuat]
+        puts ""
+        puts "Step #{$step_count}: Generate security testcase (cucumber)"
+        $step_count += 1
+        # Testcase generation
+        # SA   => True-Negative
+        # UAT  => Pass (True-Negative)
+        $at.generate_steps('./features/step_definitions')
+        $at.generate_testcase('dir', './features')
+        # at.print_test_selection
+        $uat = $at.test_selection
+
+        puts "    cucumber --format json --out cucumber.json features/railroadmap_*.feature"
+      end
+
+      # check result
+      if options[:cucumber_result]
+        puts ""
+        puts "Step #{$step_count}: Load security test result (cucumber)"
+        $step_count += 1
+
+        $at.parse_cucumber_result('cucumber.json')
+        # at.print_test_selection
+        $at.update_warning_flag
+        # for Dashboard
+        $uat = $at.test_selection
       end
 
       #-----------------------------------------------------------------------

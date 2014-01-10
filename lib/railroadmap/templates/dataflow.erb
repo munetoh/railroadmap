@@ -1,0 +1,66 @@
+<div class="dashboard_container" id="<%= title.gsub(/[^a-zA-Z]/, '') %>">
+  <h2>
+    <span class="group_name"><%= title %></span>
+    (<span class="covered_percent"><span class="<%= warning_css_class(unclear) %>">
+    <%= unclear %>
+    </span></span>
+     unclear definitions)
+  </h2>
+  <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
+
+  <h3></h3>
+  <h3>
+    Dataflows
+    (<span class="covered_percent"><span class="<%= warning_css_class(raw_out_count) %>">
+    <%= raw_out_count %>
+    </span></span>
+     raw outputs, 
+     <span class="covered_percent"><span class="<%= warning_css_class(downsteram_policy_count) %>">
+     <%= downsteram_policy_count %>
+     </span></span>
+     downsteram policy
+     )
+  </h3>
+  <table class="dataflow_list">
+    <thead>
+      <tr>
+        <th class="strong">Id</th>
+
+        <th class="strong">Input (View)</th>
+        <th class="strong">I-V Command</th>
+        <th class="strong">Variable</th>
+        <th class="strong">V-V Command</th>
+        <th class="strong">Variable</th>
+        <th class="strong">V-I Command</th>
+        <th class="strong">Output (View)</th>
+
+        <th class="strong">In policy</th>
+        <th class="strong">V policy</th>
+        <th class="strong">Out policy</th>
+
+        <th class="strong">elicited by</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% dataflows.each do |df| %>
+      <tr <%= unclear_css_tr_class((df['red'] or df['xss_red']), df['title']) %> >
+        <td>DF<%= "%04d" % df['id'] %></td>
+        <td><%= df['IS'] %></td>
+        <td><%= df['IT'] %></td>
+        <td><%= df['IVT'] %></td>
+        
+        <td><%= df['CT'] %></td>
+        <td><%= df['OVT'] %></td>
+        <td class="<%= unclear_css_class(df['xss_red']) %>"><%= df['OT'] %></td>
+        <td><%= df['OS'] %></td>
+
+        <td class="<%= unclear_css_class(df['red']) %>"><%= df['IP'] %></td>
+        <td class="<%= unclear_css_class(df['red']) %>"><%= df['VP'] %></td>
+        <td class="<%= unclear_css_class(df['red']) %>"><%= df['OP'] %></td>
+
+        <td><%= df['origin'] %></td>
+      </tr>
+      <% end %>
+    </tbody>
+  </table>  
+</div>

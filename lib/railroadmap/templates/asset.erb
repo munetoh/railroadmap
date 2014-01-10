@@ -159,48 +159,6 @@
     </tbody>
   </table>
 
-  <hr/> <hr/> 
-  <h3>
-    Command list (Model-View-Controller)
-    (<span class="<%= warning_css_class(design.unclear_command) %>"><b><%= design.unclear_command %></b> 
-    unclear definition </span>)
-  </h3>
-  <div>
-  Fix RailroadMap (ast.rb) to support unknown command. 
-  </div>
-
-  <table class="command_list">
-    <thead>
-      <tr>
-        <th class="strong"> Command </th>
-        <th class="strong"> Count </th>
-        <th class="strong"> Provided by </th>
-        <th class="strong"> Type </th>
-        <th class="strong"> Sub-type </th>
-        <th class="strong"> Trans? </th>
-        <th class="strong"> Dataflow? </th>
-        <th class="strong"> Security function? </th>
-        <th class="strong"> Status </th>
-        <th class="strong"> Comments </th>
-      </tr>
-    </thead>
-    <tbody>
-    <% design.commands.each do |k, c| %>
-      <tr class="<%= unclear_css_class(c.unclear) %>">
-        <td><%= k %></td>
-        <td><%= c.count.to_s %></td>
-        <td><%= c.providedby %></td>
-        <td><%= c.type %></td>
-        <td><%= c.subtype %></td>
-        <td><%= c.has_trans %></td>
-        <td><%= c.has_dataflow %></td>
-        <td><%= c.is_sf %></td>
-        <td><%= c.status %></td>
-        <td><%= c.comment %></td>
-      </tr>
-    <% end %>
-    </tbody>
-  </table>
   <!-- 1) change td, 2) update transition_list public/application.js  -->
 
 </div>

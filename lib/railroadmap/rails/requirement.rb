@@ -9,65 +9,135 @@ module Rails
   # railroadmap/requirements.rb
   class Requirement
     def initialize
+      @requirements_hash = {} # JSON
       @remidiation = {}
+      # for remidiation
+      @remidiation_json = {}
+      @remidiation_json['asset_discrete_policies'] = {}
+      @has_remidiation = false
     end
+    attr_accessor :has_remidiation
 
-    # Policy
-    # remidiation
-    def add_policy_remidiation(domain, key, value)
-      r = @remidiation[domain]
-      if r.nil?
-        # new
-        r = {}
-        r[key] = value
-        @remidiation[domain] = r
-      else
-        r2 = r[key]
-        if r2.nil?
-          r[key] = value
+    # Load JSON requirements (v0.2.3)
+    #
+    # policy definitions
+    #   domain           target
+    #   ---------------------------
+    #   model            Model
+    #   ---------------------------
+    #   model#action     Class#Method = Domain
+    #   modelpage
+    #   model.attribute  Variables
+    #
+    def load(filename)
+
+      $log.debug "loaded existing requirements file #{filename}"
+      req_count = 0
+
+      # check
+      unless File.exist?(filename)
+        print "\e[31m"  # red
+        puts "requirements #{filename} is missing."
+        puts "create initial file? [Y/n]"
+        ans = STDIN.gets
+        ans = ans.chomp.downcase
+
+        if ans == 'y'
+          # Make sample
+          print_sample_requirements(filename)
+          print "\e[0m" # reset
         else
-          $log.error "#{key} exist"
+          puts "please prepare #{filename}"
+          print "\e[0m" # reset
+          exit
         end
       end
-    end
 
-    def print_policy_remidiation
-      if $roles.size == 0
-        print "\e[31m"  # red
-        puts "    missing req.   : #{@remidiation.size} (controller states), set $roles"
-        print "\e[0m"   # reset
-      elsif @remidiation.size > 0
-        print "\e[31m"  # red
-        puts "    missing req.   : #{@remidiation.size} (controller states)"
-        puts ""
-        puts "Set the followings to $assets in rairoadmap/requirements.rb"
-        puts "---"
-        puts "# Remidiation. Gen by tool"
-        level = 40
-        @remidiation.each do |d, r|
-          domain_name = "'#{d}'"
-          puts "#{domain_name.rjust(level)} => {\n"
-          r.each do |k, v|
-            k2 = "'#{k}'"
-            if v.class == String
-              v2 = "'#{v}'"
-            else
-              v2 = v
-            end
-            puts "#{k2.rjust(level)} => #{v2},"
-          end
-          puts "                                            },"
-        end
+      # load
+      open(filename, 'r') { |fp| @requirements_hash = JSON.parse(fp.read) }
 
-        puts "---"
-        print "\e[0m" # reset
+      # TODO: migrate to JSON style
+      # 'moderator'   => { level: 10, color: '#BCA352', description: 'moderator'},
+      if @requirements_hash['roles'].nil?
+        $roles = nil
       else
-        print "\e[32m"  # green
-        puts "    missing req.   : 0"
+        $roles = {}
+        @requirements_hash['roles'].each do |k, v|
+          $roles[k] = { level: v['level'], color: v['color'], description: v['description'] }
+        end
+      end
+
+      # TODO: change global variable names
+      $assets_base_policies = @requirements_hash['asset_base_policies']
+      $assets_mask_policies = @requirements_hash['asset_discrete_policies']
+
+      # Load/Inject Policy after model gen.
+      if $assets_base_policies.nil?
+        # $log.error "Please set $assets_base_policies={} in railroadmap/requirements.rb"
+        print "\e[31m"  # red
+        puts "    Please set \"asset_base_policies\":{} in #{filename}"
         print "\e[0m" # reset
+
+        $assets_base_policies = {}
+      else
+        # load model policies
+        $stat_policy_model_count = 0
+        $stat_policy_model_na_count = 0
+        # loop
+        $assets_base_policies.each do |k, a|
+          set_model_policy(k, a)
+          req_count += 1
+        end
+        # Check model w/o policy => Remidiation
+        check_models_wo_policy
+      end
+
+      #  set mask policy before propagate the policy
+      if $assets_mask_policies.nil?
+        # $log.error "Please set $assets_mask_policies={} in railroadmap/requirements.rb"
+        print "\e[31m"  # red
+        puts "    Please set \"asset_discrete_policies\":{} in #{filename}"
+        print "\e[0m" # reset
+        $assets_mask_policies = {}
+      else
+        # TODO: unified list or C,V,Var separate list?
+        # 1) propagage => overwrite, OR
+        # 2) req mask -> propagate  <== EASY?
+        $assets_mask_policies.each do |k, a|
+          set_cv_policy(k, a)
+          req_count += 1
+        end
+      end
+
+      puts "    requirments    : #{req_count} assets (provided by #{filename})"
+
+      # Model-> ALL Controller states
+      propagate_policy
+
+      # policy propagation diagram, save to PDF
+      print_policy_assignment_diagram
+
+      # simple check 1
+      if $authentication_module.nil?
+        # no authentication module => RED
+        print "\e[31m" # red
+        puts "    authentication : N/A (railroadmap/config.rb)"
+        print "\e[0m"  # reset
+      else
+        puts "    authentication : #{$authentication_module.name}"
+      end
+
+      if $authorization_module.nil?
+        # no authorizarion module => RED
+        print "\e[31m" # red
+        puts "    authorizarion  : N/A (railroadmap/config.rb)"
+        print "\e[0m"  # reset
+      else
+        puts "    authorizarion  : #{$authorization_module.name}"
       end
     end
 
+    # deprecated?
     def get_lowest_role
       name = 'TBD'
       level = 15
@@ -108,6 +178,27 @@ module Rails
       end
     end
 
+    # TODO: be JSON native
+    # ruby
+    # roles: [
+    #  { role: 'moderator', action: 'CRUD' },
+    #  { role: 'user',  action: 'CRU', is_owner: true } ]
+    # JSON
+    # "roles": [
+    #  { "role": "moderator", "action": "CRUD" },
+    #  { "role": "user",  "action": "CRU", "is_owner": true } ]
+    def j2r_roles(json)
+      if json.nil?
+        roles = nil
+      else
+        roles = []
+        json.each do |r|
+          roles << { role: r["role"], action: r["action"], is_owner: r['is_owner'] }
+        end
+      end
+      return roles
+    end
+
     # common
     def set_policy(state, policy)
       if state.req_policies.count != 0
@@ -115,17 +206,17 @@ module Rails
         $log.error "set_policy(#{state.id})  REQ POLICY IS ALREADY EXIST! BAD REQ?"
       else
         # get req
-        state.model_alias  = policy[:model_alias]
+        state.model_alias  = policy['model_alias']
         # policy
         p = Abstraction::Policy.new
-        p.is_authenticated = policy[:is_authenticated]
-        p.is_authorized    = policy[:is_authorized]
-        p.level            = policy[:level]
-        p.role_list        = policy[:roles]
-        p.ignore           = policy[:ignore]
-        p.color            = policy[:color]
+        p.is_authenticated = policy['is_authenticated']
+        p.is_authorized    = policy['is_authorized']
+        p.level            = policy['level']
+        p.role_list        = j2r_roles(policy['roles'])  # JSON to Ruby
+        p.ignore           = policy['ignore']
+        p.color            = policy['color']
         p.origin_type = 'req'
-        p.origin_id = 'req'
+        p.origin_id   = 'req'
         state.req_policies << p
 
         # copy level to code => dashboard
@@ -330,33 +421,30 @@ module Rails
 
       # TODO: DF has missing variable (= nit a model attribute)
       $abst_dataflows.each do |n, df|
-        # $log.error "propagate_policy_to_variables DF #{n} #{df.type} #{df.subtype}"
         if df.type == 'in'
-          # $log.error "propagate_policy_to_variables DF #{n} #{df.type} #{df.subtype} => #{df.dst_id} #{df.dst_hint}"
           v = $abst_variables[df.dst_id]
           if v.nil?
             v2 = add_missing_variable(df.dst_id)
             if v2.nil?
               $log.error "propagate_policy_to_variables ADD sid=#{df.dst_id}  => NG"
             else
-              # $log.error "propagate_policy_to_variables ADD #{df.dst_id}  => #{v2.id}"
               df.dst_id = v2.id # Update BAD id
             end
           end
         end
+
         if df.type == 'dataflow' && df.subtype = 'input' # TODO: obsolete
           # $log.error "propagate_policy_to_variables DF #{n} #{df.type} #{df.subtype} => #{df.dst_id} #{df.dst_hint}"
         end
+
         if df.type == 'out' && !df.src_id.nil?
           # out w/ src
-          # $log.error "propagate_policy_to_variables DF #{n} #{df.type} #{df.subtype} #{df.src_id}"
           v = $abst_variables[df.src_id]
           if v.nil?
             v2 = add_missing_variable(df.src_id)
             if v2.nil?
               $log.error "propagate_policy_to_variables ADD sid=#{df.src_id}  => NG"
             else
-              # $log.error "propagate_policy_to_variables ADD #{df.src_id}  => #{v2.id}"
               df.src_id = v2.id # Update BAD id
             end
           end
@@ -367,7 +455,7 @@ module Rails
       # create alias table of M-CV
       alias_map = {}
       $assets_base_policies.each do |k, v|
-        alias_map.merge!(v[:model_alias]) unless v[:model_alias].nil?
+        alias_map.merge!(v['model_alias']) unless v['model_alias'].nil?
       end
 
       # OK check the level model == model
@@ -409,6 +497,7 @@ module Rails
       puts "  1) MVC states"
       col0 = "state"
       puts " #{col0.rjust(cwidth)}   code  req"
+      puts " #{col0.rjust(cwidth)}  (PEP)"
       puts "  --------------------------------------------------------------"
       $abst_states.each do |k, s|
         if s.routed == false
@@ -471,6 +560,12 @@ module Rails
           s.req_policies.each do |p|
             src_id += "#{p.origin_id},"
           end
+        end
+
+        if s.routed.nil?
+          code_policy_stat = '???'
+        elsif s.routed == false
+          code_policy_stat = '---'
         end
 
         print "\e[35m" if s.df_error  # Puple
@@ -601,244 +696,147 @@ module Rails
       g.output(pdf: "railroadmap/policy.pdf")
     end
 
-    # Remediation
-    def print_sample_requirements_base_policies
+    # Remediation v023
+    # RSpec: spec/rails/requirements/json_spec.rb
+    def print_sample_requirements(filename = nil)
       model_list = {}
 
-      puts "---"
-      puts "$roles = {"
-      puts "  'admin' => { level: 10, color: '#BCA352', description: 'system admin'},"
-      puts "  'user'  => { level:  3, color: '#97A750', description: 'normal user'}"
-      puts "}"
+      json = {}
 
-      puts "$assets_base_policies = {"
+      # roles
+      roles = {}
 
-      # authentication
-      if $authentication_module.nil?
-        puts "# no template for #{$authentication_module.name}"
-        puts ""
-      else
-        models = $authentication_module.print_sample_requirements_base_policies
-        models.each do |m|
-          model_list[m] = true
-        end
-        puts ""
+      r0 = {}
+      r0['level'] = 10
+      r0['color'] = '#BCA352'
+      r0['description'] = 'system admin'
+      roles['admin'] = r0
+
+      r1 = {}
+      r1['level'] = 3
+      r1['color'] = '#97A750'
+      r1['description'] = 'normal user'
+      roles['user'] = r1
+
+      json['roles'] = roles
+
+      # asset_base_policies
+      asset_base_policies = {}
+      asset_discrete_policies = {}
+      json['asset_base_policies'] = asset_base_policies
+      json['asset_discrete_policies'] = asset_discrete_policies
+
+      unless $authentication_module.nil?
+        $authentication_module.append_sample_requirements(json, model_list)
       end
 
-      # authorization
-      if $authorization_module.nil?
-        puts "  # no model for authorization #{$authorization_module.name}"
-        puts ""
-      else
-        models = $authorization_module.print_sample_requirements_base_policies
-        models.each do |m|
-          model_list[m] = true
-        end
-        puts ""
+      unless $authorization_module.nil?
+        $authorization_module.append_sample_requirements(json, model_list)
       end
 
-      # models
-      puts "  # application models"
+      # for other models
+      # puts "    // application models"
       $abst_states.each do |k, s|
         if s.type == 'model'
           m = s.model
           if model_list[m].nil?
-            puts "  '#{m}' => {  # #{s.model}"
+            # add tentative policy
+            mp = {}
+
             # TODO: code_policy?
             if s.code_policy.is_authenticated == true
-              puts "    is_authenticated: true,  # TODO: confirm"
+              mp['is_authenticated'] = true
             elsif s.code_policy.is_authenticated == false
-              puts "    is_authenticated: false, # TODO: confirm"
+              mp['is_authenticated'] = false
             else # NIL
-              puts "    is_authenticated: false, # TODO: clalify"
+              mp['is_authenticated'] = true
             end
 
             if s.code_policy.is_authorized == true
-              puts "    is_authorized: true,     # TODO: confirm"
-              acl = true
+              mp['is_authorized'] = true
             elsif s.code_policy.is_authorized == false
-              puts "    is_authorized: false,    # TODO: confirm"
-              acl = false
+              mp['is_authorized'] = false
             else # NIL
-              puts "    is_authorized: false,    # TODO: clalify"
-              acl = false
+              mp['is_authorized'] = false
             end
 
-            if acl
-              puts "    level: 3,  # user"
-              puts "    color: 'green'"
-              puts "    roles:  ["
-              puts "      { role: 'admin',  action: 'CRUD' },"
-              puts "      { role: 'user',   action: 'CRUD' } ]  # TODO: upate action"
-            else
-              puts "    # level: 3,  # user"
-              puts "    # color: 'green'"
-              puts "    # roles:  ["
-              puts "    #   { role: 'admin',  action: 'CRUD' },"
-              puts "    #   { role: 'user',   action: 'CRUD' } ]"
+            if mp['is_authorized']
+              mp['level'] = 3
+              mp['color'] = 'green'
+
+              roles = {}
+              r0 = {}
+              r0['role'] = 'admin'
+              r0['action'] = 'CRUD'
+              roles['admin'] = r0
+              r1 = {}
+              r1['role'] = 'user'
+              r1['action'] = 'CRUD'
+              roles['user'] = r1
+              mp['roles'] = roles
+              mp['commnets'] = 'tentative policy'
             end
-            puts "  },"
-            puts ""
+
+            json['asset_base_policies'][m] = mp
           end
         end
       end
 
-      puts "}"
-      puts "---"
+      print_json(json, filename)
     end
 
-    # Remediation
-    def print_sample_requirements_mask_policies
-      $log.error "TODO:"
-      controller_list = {}
-
-      puts "---"
-      puts "$assets_mask_policies = {"
-
-      # authentication
-      if $authentication_module.nil?
-        puts "# no template for #{$authentication_module.name}"
-        puts ""
+    def print_json(json, filename)
+      out = JSON.pretty_generate(json)
+      if filename.nil?
+        # STDOUT
+        puts "#{out}"
       else
-        controllers = $authentication_module.print_sample_requirements_mask_policies
-        controllers.each do |m|
-          controller_list[m] = true
+        open(filename, "w") do |f|
+          f.write(out)
         end
-        puts ""
       end
-
-      # authorization
-      if $authorization_module.nil?
-        puts "  # no model for authorization #{$authorization_module.name}"
-        puts ""
-      else
-        controllers = $authorization_module.print_sample_requirements_mask_policies
-        controllers.each do |m|
-          controller_list[m] = true
-        end
-        puts ""
-      end
-
-      puts "}"
-      puts "---"
     end
 
-    # Load requirements
     #
-    # policy definitions
-    #   domain           target
-    #   ---------------------------
-    #   model            Model
-    #   ---------------------------
-    #   model#action     Class#Method = Domain
-    #   modelpage
-    #   model.attribute  Variables
-    #
-    def load(requirements_req, requirements_file)
-      require requirements_req
-
-      $log.debug "loaded existing requirements file #{requirements_file}"
-      req_count = 0
-
-      # Load/Inject Policy after model gen.
-      if $assets_base_policies.nil?
-        # $log.error "Please set $assets_base_policies={} in railroadmap/requirements.rb"
-
-        print "\e[31m"  # red
-        puts "    Please set $assets_base_policies={} in railroadmap/requirements.rb"
-        # add remidiations
-        print_sample_requirements_base_policies
-        print "\e[0m" # reset
-
-        $assets_base_policies = {}
-      else
-        # load model policies
-        $stat_policy_model_count = 0
-        $stat_policy_model_na_count = 0
-        # loop
-        $assets_base_policies.each do |k, a|
-          set_model_policy(k, a)
-          req_count += 1
+    def add_discrete_requirement(state)
+      @has_remidiation = true
+      dp = {}
+      if state.code_policy.is_authenticated == false
+        dp['is_authenticated'] = false
+      elsif state.code_policy.is_authenticated == true
+        dp['is_authenticated'] = true
+        if state.code_policy.is_authorized == false
+          dp['is_authorized'] = false
+        elsif state.code_policy.is_authorized == true
+          dp['is_authorized'] = true
+        else # NIL, Unknown => any role
+          dp['is_authorized'] = false
         end
-        # Check model w/o policy => Remidiation
-        check_models_wo_policy
+      else # NIL, Unknown => public
+        dp['is_authenticated'] = false
+        dp['is_authorized'] = false
       end
 
-      #  set mask policy before propagate the policy
-      if $assets_mask_policies.nil?
-        # $log.error "Please set $assets_mask_policies={} in railroadmap/requirements.rb"
-        print "\e[31m"  # red
-        puts "    Please set $assets_mask_policies={} in railroadmap/requirements.rb"
-        print_sample_requirements_mask_policies unless $assets_base_policies.nil?
-        print "\e[0m" # reset
-        $assets_mask_policies = {}
-      else
-        # TODO: unified list or C,V,Var separate list?
-        # 1) propagage => overwrite, OR
-        # 2) req mask -> propagate  <== EASY?
-        $assets_mask_policies.each do |k, a|
-          set_cv_policy(k, a)
-          req_count += 1
-        end
+      if dp['is_authorized']
+        dp['level'] = 3
+        dp['color'] = 'green'
+
+        r0 = {}
+        r0['role'] = 'admin'
+        r0['action'] = 'CRUD'
+
+        r1 = {}
+        r1['role'] = 'user'
+        r1['action'] = 'CRUD'
+
+        dp['roles'] = [r0, r1]
+        dp['commnets'] = 'tentative policy'
       end
+      @remidiation_json['asset_discrete_policies'][state.id] = dp
+    end
 
-      puts "    requirments    : #{req_count} assets (provided by #{requirements_req})"
-
-      # Model-> ALL Controller states
-      propagate_policy
-
-      # policy propagation diagram, save to PDF
-      print_policy_assignment_diagram
-
-      # simple check 1
-      if $authentication_module.nil?
-        # no authentication module => RED
-        print "\e[31m" # red
-        puts "    authentication : N/A (railroadmap/config.rb)"
-        print "\e[0m"  # reset
-      else
-        puts "    authentication : #{$authentication_module.name}"
-      end
-
-      if $authorization_module.nil?
-        # no authorizarion module => RED
-        print "\e[31m" # red
-        puts "    authorizarion  : N/A (railroadmap/config.rb)"
-        print "\e[0m"  # reset
-      else
-        puts "    authorizarion  : #{$authorization_module.name}"
-      end
-
-      # New
-      print_policy_remidiation
-
-    rescue LoadError => e
-      puts "Missing requirements #{requirements_file}"
-      puts "create initial file? [Y/n]"
-      ans = STDIN.gets
-      ans = ans.chomp.downcase
-
-      if ans == 'y'
-        # Make sample
-        open(requirements_file, "w") do |f|
-          # TODO: use info from SRC
-          f.write "# RailroadMap security requirements file\n"
-          # Version
-          f.write "\n"
-          f.write "# Type of Access Control. rbac\n"
-          # f.write "$ac_type = 'rbac' # TODO: update\n"
-          f.write "\n"
-          f.write "# $roles = {\n"
-          f.write "# }\n"
-          f.write "# $assets_base_policies = {\n"  # TODO; rename to assets_model_policies
-          f.write "# }\n"
-          f.write "# $assets_mask_policies = {\n"  # TODO; rename to assets_controller_policies
-          f.write "# }\n"
-          f.write "# EOF\n"
-        end
-      end
-      # use dummy
-      # $ac_type = 'unknown'
+    def print_discrete_requirement(filename = nil)
+      print_json(@remidiation_json, filename)
     end
   end # class
 end # module

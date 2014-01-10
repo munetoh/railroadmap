@@ -14,7 +14,7 @@
 
 module Abstraction
   #
-  class SecurityFunction
+  class SecurityFunction < Abstraction::Parser::AstParser
     def initialize
       @name = nil
       @type = nil

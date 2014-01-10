@@ -9,5 +9,5 @@ $LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
 
 # RailroadMap
 module Railroadmap
-  VERSION = '0.2.2'
+  VERSION = '0.2.3'
 end

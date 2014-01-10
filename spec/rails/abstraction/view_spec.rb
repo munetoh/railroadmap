@@ -11,9 +11,12 @@ describe Abstraction::Parser::View do
   it ": init railroadmap" do
     init_railroadmap
     $apv = Abstraction::Parser::View.new
-    $apv.add_json_command_list('./lib/railroadmap/command_library/rails.json')
-    # $apv.add_json_command_list('./lib/railroadmap/command_library/simple_form.json')
-    # $apv.add_json_command_list('./lib/railroadmap/command_library/semantic_menu.json')
+    $abs = Abstraction::MVC.new
+    $abs.add_json_command_list('./lib/railroadmap/command_library/ruby.json')
+    $abs.add_json_command_list('./lib/railroadmap/command_library/rails.json')
+    $abs.add_json_command_list('./lib/railroadmap/command_library/devise.json')
+    # v023 memo
+    # microformats_duration  Helper of TimeFliesBy
 
     # dummy states
     sc1 = $apv.add_state('controller', 'task#create', nil)

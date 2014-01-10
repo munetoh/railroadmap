@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = "railroadmap"
-  s.version = "0.2.2"
+  s.version = "0.2.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Seiji Munetoh"]
-  s.date = "2013-12-11"
+  s.date = "2014-01-10"
   s.description = "TBD"
   s.email = "seiji.munetoh@gmail.com"
   s.executables = ["railroadmap"]
@@ -28,16 +28,21 @@ Gem::Specification.new do |s|
     "VERSION",
     "bin/railroadmap",
     "lib/railroadmap.rb",
+    "lib/railroadmap/brakeman.rb",
     "lib/railroadmap/cli.rb",
+    "lib/railroadmap/command_library/cancan.json",
+    "lib/railroadmap/command_library/devise.json",
+    "lib/railroadmap/command_library/mongo_mapper.json",
     "lib/railroadmap/command_library/rails.json",
     "lib/railroadmap/command_library/ruby.json",
     "lib/railroadmap/command_library/semantic_menu.json",
     "lib/railroadmap/command_library/simple_form.json",
+    "lib/railroadmap/command_library/the_role.json",
     "lib/railroadmap/command_library/unknown.json",
     "lib/railroadmap/config-file.rb",
+    "lib/railroadmap/cucumber_library/railroadmap_steps.rb",
     "lib/railroadmap/dashboard.rb",
     "lib/railroadmap/errors.rb",
-    "lib/railroadmap/libpeerconnection.log",
     "lib/railroadmap/map.rb",
     "lib/railroadmap/rails/abstraction.rb",
     "lib/railroadmap/rails/abstraction/attack.rb",
@@ -58,11 +63,13 @@ Gem::Specification.new do |s|
     "lib/railroadmap/rails/abstraction/state.rb",
     "lib/railroadmap/rails/abstraction/transition.rb",
     "lib/railroadmap/rails/abstraction/variable.rb",
+    "lib/railroadmap/rails/acceptance-test.rb",
     "lib/railroadmap/rails/authlogic.rb",
     "lib/railroadmap/rails/cancan.rb",
     "lib/railroadmap/rails/csrf.rb",
     "lib/railroadmap/rails/cucumber.rb",
     "lib/railroadmap/rails/devise.rb",
+    "lib/railroadmap/rails/gems.rb",
     "lib/railroadmap/rails/pdp.rb",
     "lib/railroadmap/rails/rails-commands.rb",
     "lib/railroadmap/rails/requirement.rb",
@@ -72,6 +79,7 @@ Gem::Specification.new do |s|
     "lib/railroadmap/rails/the-role.rb",
     "lib/railroadmap/rails/xss.rb",
     "lib/railroadmap/security-assurance-model.rb",
+    "lib/railroadmap/templates/asset.erb",
     "lib/railroadmap/templates/assets/application.css",
     "lib/railroadmap/templates/assets/application.js",
     "lib/railroadmap/templates/assets/fancybox/blank.gif",
@@ -112,14 +120,18 @@ Gem::Specification.new do |s|
     "lib/railroadmap/templates/assets/smoothness/images/ui-icons_454545_256x240.png",
     "lib/railroadmap/templates/assets/smoothness/images/ui-icons_888888_256x240.png",
     "lib/railroadmap/templates/assets/smoothness/images/ui-icons_cd0a0a_256x240.png",
+    "lib/railroadmap/templates/command.erb",
     "lib/railroadmap/templates/dashboard.erb",
-    "lib/railroadmap/templates/design.erb",
+    "lib/railroadmap/templates/dataflow.erb",
     "lib/railroadmap/templates/diagram.erb",
+    "lib/railroadmap/templates/error.erb",
     "lib/railroadmap/templates/file_list.erb",
+    "lib/railroadmap/templates/gems.erb",
     "lib/railroadmap/templates/layout.erb",
     "lib/railroadmap/templates/navmodel.erb",
     "lib/railroadmap/templates/rational.erb",
     "lib/railroadmap/templates/source_file.erb",
+    "lib/railroadmap/templates/uat.erb",
     "lib/railroadmap/templates/warning.erb",
     "lib/railroadmap/warning.rb",
     "lib/sorcerer.rb",
@@ -150,14 +162,25 @@ Gem::Specification.new do |s|
     "spec/rails/abstraction/sample/db/schema.rb",
     "spec/rails/abstraction/testenv.rb.sample",
     "spec/rails/abstraction/view_spec.rb",
+    "spec/rails/acceptance-test/csrf_spec.rb",
+    "spec/rails/acceptance-test/cucumber.json",
+    "spec/rails/acceptance-test/ma_spec.rb",
+    "spec/rails/acceptance-test/result_spec.rb",
+    "spec/rails/acceptance-test/xss_spec.rb",
+    "spec/rails/commands/cancan1_spec.rb",
+    "spec/rails/commands/cancan2_spec.rb",
     "spec/rails/commands/content_for_spec.rb",
+    "spec/rails/commands/devise_spec.rb",
     "spec/rails/commands/form_for_spec.rb",
-    "spec/spec_helper.rb"
+    "spec/rails/commands/the_role_spec.rb",
+    "spec/rails/requirements/json_spec.rb",
+    "spec/spec_helper.rb",
+    "spec/support/rails.rb"
   ]
   s.homepage = "http://github.com/munetoh/railroadmap"
   s.licenses = ["MIT"]
   s.require_paths = ["lib"]
-  s.rubygems_version = "1.8.24"
+  s.rubygems_version = "1.8.25"
   s.summary = "Generate behavior model of Ruby on Rails Web application."
 
   if s.respond_to? :specification_version then

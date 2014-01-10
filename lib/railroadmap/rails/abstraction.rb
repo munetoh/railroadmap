@@ -104,6 +104,25 @@ module Abstraction
 
     #  Init Commands - Rails basic
     def init_commands
+
+      # Load JSON command libraries
+      Dir[File.join(File.dirname(__FILE__), '../command_library/*.json')].each do |path|
+        $log.debug "load  JSON command libraries #{path}"
+        gem_name = File.basename(path, ".json")
+        if gem_name == 'ruby' || gem_name == 'unknown'
+          add_json_command_list(path)
+        elsif $gems.gems[gem_name].nil?
+          # Miss
+          $log.debug "#{gem_name} is missing in Gemfile - SKIP"
+        else
+          # Hit
+          count = add_json_command_list(path)
+          # Update gem list
+          $gems.gems[gem_name][:command_library] = path
+          $gems.gems[gem_name][:command_count]   = count
+        end
+      end
+
       # add crails commands, defined in rails_command.rb
       rc = Rails::Commands.new
 
@@ -132,6 +151,65 @@ module Abstraction
 
       # Set user defined commands. application
       add_command_list($local_commands) unless $local_commands.nil?
+    end
+
+    # JSON
+    def add_json_command_list(filename)
+      command_list = nil
+      open(filename) do |io|
+        command_list = JSON.load(io)
+      end
+      # pp command_list
+      count = 0
+      command_list.each do |k, v|
+        type       = v["type"]
+        providedby = v["providedby"] || 'app'
+
+        if $abst_commands[k].nil?
+          if type == 'transition'
+            c = add_trans_command_to_list(k, v["subtype"])
+            c.transition_path = v["transition_path"]   # Force path
+            c.providedby      = providedby
+          elsif type == 'filter' then
+            $log.debug "init_commands() - TODO: add app filter command #{k}"
+            c = Abstraction::Command.new
+            c.name       = k
+            c.type       = type
+            c.subtype    = v["subtype"]
+            c.is_sf      = v["is_sf"]
+            c.sf_type    = v["sf_type"] if c.is_sf == true
+            c.providedby = providedby
+            c.status     = v["status"] # 'beta'
+            # DST
+            # copy dst table => extracted by compleate_filter()
+            c.dst_table = v["dest_list"] unless v["dest_num"].nil?
+            $abst_commands[c.name] = c
+          else
+            c = Abstraction::Command.new
+            c.name        = k
+            c.type        = type
+            c.subtype     = v["subtype"] unless v["subtype"].nil?
+            c.is_sf       = v["is_sf"]   unless v["is_sf"].nil?
+            c.sf_type     = v["sf_type"] unless v["sf_type"].nil?
+            c.providedby  = providedby
+            c.status      = v["status"] # 'TODO'
+            $abst_commands[c.name] = c
+          end
+
+          # Dataflow
+          c.has_dataflow = v["has_dataflow"] || false
+          c.is_inbound   = v["is_inbound"]   || false
+          c.is_outbound  = v["is_outbound"]  || false
+          # Testcase
+          c.testcase_type = v['testcase_type'] unless v['testcase_type'].nil?
+          c.testcase_name = v['testcase_name'] unless v['testcase_name'].nil?
+          count += 1
+        else
+          $log.error "add_json_command_list() - command/filter '#{k}' already exist"
+          fail "DEBUG"
+        end  # nil
+      end  # each
+      return count
     end
 
     def add_to_command_list(classobj)
@@ -488,7 +566,7 @@ module Abstraction
       elsif filter.type == 'unknown_command'
         $log.debug "complete_filter() - TODO: #{filter.name}  #{filter.type}"
       else # !filter
-        $log.error "complete_filter() - TODO: name='#{filter.name}'  type='#{filter.type}'"
+        $log.debug "complete_filter() - TODO: name='#{filter.name}'  type='#{filter.type}'"
       end
 
       # TODO: Transition?
@@ -591,47 +669,79 @@ module Abstraction
     # Complete Transitions
     # v020 the destination id has been tempolary assigned by AST parser
     #      here we check the id and fix if it was missing
+    # v023 $app_id2id => $app_fix_trans
+    #   $app_fix_trans
+    #     {SRC_ID : BAD_DST_ID: type}  => { SRC_ID, FIXED_DST_ID, type }"
+    # severity
+    #   0
+    #   1  invalid trans, ignore, Fixed
+    #   2  BAD conf, still missing
     def complete_transition
       app_id2id_str = ''
       $abst_transitions.each do |n, trans|
+        severity = 0
         src = $abst_states[trans.src_id]
         if trans.dst_id.nil?
+          # no dst id
           dst = nil
         else
           dst = $abst_states[trans.dst_id]
           if dst.nil?
+            # dst_id is missing => fix by $app_fix_trans
             # TODO: form_for submit has two temp trans
+            key = "#{trans.src_id} #{trans.dst_id} #{trans.type}"
             error_type  = 'transition with missing destination state'
-            conf        = "'#{trans.dst_id}' => { src_id: '#{trans.src_id}', dst_id: 'TODO', type: '#{trans.type}' }"
+            conf        = "'#{key}' => { src_id: '#{trans.src_id}', dst_id: 'TODO', type: '#{trans.type}' }"
             message     = "Distination is missing for transition id=#{trans.id}, from #{trans.src_id} to #{trans.dst_id}."
             remidiation = "Fix or delete the transition. Please set $app_id2id at 'railroadmap/abstraction.rb'. e.g. #{conf}'"
+
             app_id2id_comment = ''
             if trans.tentative # trans generated by form_for
               message = message + " Since the tool assign tentative destination for 'submit' in 'form_for'."
-              app_id2id_comment = '# form_for'
+              app_fix_trans_comment = ' # form_for'
             end
-            if !$app_id2id.nil? && !$app_id2id[trans.dst_id].nil? && $app_id2id[trans.dst_id][:type] ==  trans.type && $app_id2id[trans.dst_id][:src_id] == trans.src_id
-              # Hit
-              if $app_id2id[trans.dst_id][:dst_id].nil?
-                # Delete
-                trans.invalid = true
-                severity = 1
-                message     = "Fixed (invalid). => " + message
-              else
-                # Fix
-                old_id = trans.dst_id
-                trans.dst_id = $app_id2id[trans.dst_id][:dst_id]
-                if trans.dst_id.nil?  # bad conf
-                  severity = 2
-                  message     = "Bad $app_id2id. " + message
-                  remidiation = "Bad $app_id2id. " + remidiation
+
+            # TODO: multiple DST exist
+            if !$app_fix_trans.nil?
+              if !$app_fix_trans[key].nil?
+                if $app_fix_trans[key][:type] ==  trans.type
+                  if $app_fix_trans[key][:src_id] == trans.src_id
+                    # Hit
+                    if $app_fix_trans[key][:dst_id].nil?
+                      # Delete
+                      trans.invalid = true
+                      severity = 1
+                      message     = "Fixed (invalid). => " + message
+                    else
+                      # Fix
+                      old_id = trans.dst_id
+                      trans.dst_id = $app_fix_trans[key][:dst_id]
+                      if trans.dst_id.nil?  # bad conf
+                        severity = 2
+                        message     = "Bad $app_id2id. " + message
+                        remidiation = "Bad $app_id2id. " + remidiation
+                        app_id2id_comment = " # bad conf?"
+                      else
+                        severity = 1
+                        message  = "Fixed (#{old_id} => #{trans.dst_id}). => " + message
+                      end
+                    end
+                  else
+                    # Missing SRC
+                    severity = 2
+                    app_fix_trans_comment = " # no $app_id2id[trans.dst_id][:src_id]"
+                  end
                 else
-                  severity = 1
-                  message  = "Fixed (#{old_id} => #{trans.dst_id}). => " + message
+                  severity = 2
+                  app_fix_trans_comment = " # no $app_id2id[trans.dst_id][:type]"
                 end
+              else
+                severity = 2
+                app_fix_trans_comment = " # no key, #{key} in $app_fix_trans"
               end
             else  # no conf
               severity = 2
+              app_fix_trans_comment = " # no $app_fix_trans"
             end
 
             # add error msg
@@ -643,7 +753,7 @@ module Abstraction
             $errors.add(e)
 
             if severity > 1
-              app_id2id_str += "  #{conf}, #{app_id2id_comment}\n"
+              app_id2id_str += "  #{conf}, #{app_fix_trans_comment}\n"
             end
           end
         end # do
@@ -654,12 +764,75 @@ module Abstraction
         print "\e[31m"  # red
         puts "Destination is missing, please fix the transition by setting $app_id2id in railroadmap/abstraction.rb. e.g."
         puts "---"
-        puts "# {BAD_DST_ID}  => { SRC_ID, DST_ID, type }"
-        puts "$app_id2id = {"
+        puts "# {SRC_ID : BAD_DST_ID}  => { SRC_ID, FIXED_DST_ID, type }"
+        puts "$app_fix_trans = {"
         puts app_id2id_str
         puts "}"
         puts "---"
         print "\e[0m" # reset
+      end
+    end
+
+    # Missing DST
+    def check_transitions
+      count_all = 0
+      count_set = 0
+      count_miss = 0
+      msg = ''
+      $abst_transitions.each do |n, trans|
+        status = 0
+        if trans.dst_id.nil?
+          count_all += 1
+          if !$app_dst_id.nil?
+            if !$app_dst_id[n].nil?
+              if $app_dst_id[n][:src_id] == trans.src_id
+                # HIT
+                dst_id = $app_dst_id[n][:dst_id]
+                # check DST
+                if dst_id == 'TODO'
+                  # Not set by user
+                elsif $abst_states[dst_id].nil?
+                  $log.error "BAD dst"
+                  status = 4
+                else
+                  trans.dst_id = dst_id
+                  count_set += 1
+                end
+              else
+                # Bad abstraction
+                $log.error "TODO"
+                status = 3
+              end
+            else
+              # No entory, new trans?
+              status = 2
+            end
+          else
+            # no $app_dst_id
+            status = 1
+          end
+
+          if status > 0
+            count_miss += 1
+            hint = Sorcerer.source(trans.dst_hint)
+            msg += "  '#{n}' => {src_id: '#{trans.src_id}', dst_id: 'TODO'},\n"
+            msg += "    # status #{status}, hint #{hint}\n"
+          end
+        end
+      end
+
+      if count_miss > 0
+        print "\e[31m"  # red
+        puts  "      missing dst : #{count_miss}/#{count_all}"
+        puts  "      railroadmap/abstraction.rb "
+        puts  "---"
+        puts  "$app_dst_id = {"
+        print msg
+        puts  "}"
+        puts  "---"
+        print "\e[0m" # reset
+      else
+        puts  "      missing dst : 0/#{count_all} (all destinations are set by manually)"
       end
     end
 

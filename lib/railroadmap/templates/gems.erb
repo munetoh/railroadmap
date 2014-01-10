@@ -1,0 +1,49 @@
+<div class="dashboard_container" id="<%= title.gsub(/[^a-zA-Z]/, '') %>">
+  <h2>
+    <span class="group_name"><%= title %></span>
+    (<span class="covered_percent"><span class="<%= warning_css_class(gems_warning_count) %>"><%= gems_warning_count %></span></span>
+     warnings)
+  </h2>
+  <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
+
+
+  <hr/> <hr/> 
+  <h3>
+    Gem list
+    (<span class="<%= warning_css_class(gems_warning_count) %>"><b><%= gems_warning_count %></b> 
+    warnings </span>)
+  </h3>
+  <div>
+  Update RailroadMap command library, OR railroadmap/abstraction.rb to support unknown command.
+  </div>
+
+  <table class="command_list">
+    <thead>
+      <tr>
+        <th class="strong"> Gem </th>
+        <th class="strong"> Version </th>
+        <th class="strong"> Command library</th>
+        <th class="strong"> Command num</th>
+        <th class="strong"> Brekeman warning </th>
+      </tr>
+    </thead>
+    <tbody>
+    <% $gems.gems.each do |k, g| %>
+      <tr class="<%= unclear_css_class(!g[:warnings].nil?) %>">
+        <td><%= k %></td>
+        <td><%= g[:version] %></td>
+        <% if g[:command_library].nil? %>
+          <td></td>
+          <td></td>
+        <% else %>
+          <td><a href="<%= g[:command_library]%>"> JSON file</a></td>
+          <td><%= g[:command_count] %></td>
+        <% end %>
+        <td><%= g[:warnings] %></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+  <!-- 1) change td, 2) update transition_list public/application.js  -->
+
+</div>

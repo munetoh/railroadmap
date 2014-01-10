@@ -36,258 +36,8 @@
 # used in Model, ability.rb
 # CanCan can => $cancan.set_crud_entry()
 #
-class CanCommand < Abstraction::Command
-  def initialize
-    super
-    @name = 'can'
-    @type = 'pdp'
-    @providedby = 'cancan'
-    @is_sf = true
-  end
 
-  def abstract(sexp, sarg, filename)
-    super
-    if $parse_cancan
-      begin
-        $authorization_module.set_crud_entry($block, sexp[2][1])
-      rescue => e
-        $log.error "#{@filename}"
-        raise e
-      end
-    else
-      $log.error "CANCAN ast"
-      fail "TODO: CANCAN can command"
-    end
-  end
-end
-
-# used in Controller class
-# CanCan before filter => this is var_ref => controller.rb
-# TODO: set flag to each actions
-#  1) action_list
-#  2) check (define PDP common api)
-class LoadAndAuthorizeResourceCommand < Abstraction::Command
-  def initialize
-    super
-    @name = 'load_and_authorize_resource'
-    @type = 'pep'
-    @providedby = 'cancan'
-    @is_sf = true
-  end
-
-  def abstract(sexp, sarg, filename)
-    super
-
-    begin
-      if sexp.nil?
-        @authorize = true
-        $cancan_bf = 'load_and_authorize_resource' # TBD
-        #
-        # ACL ckeck
-        # acls = $authorization_module.get_crud_entry_by_subject(@class_name, nil)
-      elsif sexp[2][0] == :args_add_block
-        sexp_aab = sexp[2][1]
-        if sexp_aab[0][0] == :bare_assoc_hash
-          # load_and_authorize_resource :except => [:show]
-          # load_and_authorize_resource :except => [ :index, :show, :new, :create ]
-          $log.debug "CANCAN load_and_authorize_resource w/ EXCEPT"
-          if sexp_aab[0][1][0][1][1][1][1] == 'except'
-            # Except
-            $cancan_except = {}
-            as =  ssexp_aab[0][1][0][2][1]
-            as.each do |a|
-              $cancan_except[a[1][1][1]] = true
-            end
-            @authorize = true
-            $cancan_bf = 'load_and_authorize_resource_with_except' # TBD
-            # ACL ckeck
-            # acls = $authorization_module.get_crud_entry_by_subject(@class_name, except)
-          elsif sexp_aab[0][1][0][1][1][1][1] == 'only'
-            # ONLY
-            @authorize = true
-            $cancan_bf = 'load_and_authorize_resource_with_only' # TBD
-            # ACL ckeck
-            # TODO: acls = $cancan.get_crud_entry_by_subject(@class_name, nil, only)
-          elsif sexp_aab[0][1][0][0] == :assoc_new
-            if sexp_aab[0][1][0][1][0] == :@label
-              if sexp_aab[0][1][0][1][1] == 'class:'
-                # If the model class is namespaced differently than the controller
-                # specify the :class option.
-                # e.g. load_and_authorize_resource class: Message
-                model =  sexp_aab[0][1][0][2][1][1] if sexp_aab[0][1][0][2][0] == :var_ref && sexp_aab[0][1][0][2][1][0] == :@const
-                $log.debug "CANCAN load_and_authorize_resource TODO: #{$filename} assinged #{model}'s' policy"
-                puts "    CANCAN: load_and_authorize_resource => set '#{model}' policy to #{$filename}"
-              else
-                $log.error "CANCAN load_and_authorize_resource UNKNOWN #{$filename}"
-                pp sexp[2]
-              end
-            else
-              $log.error "CANCAN load_and_authorize_resource UNKNOWN #{$filename}"
-              pp sexp[2]
-            end
-          else
-            $log.error "CANCAN load_and_authorize_resource UNKNOWN #{$filename}"
-            pp sexp[2]
-            pp sexp_aab[0][0]
-            # TODO: save to ERROR
-          end
-        else
-          subject = sexp[2][1][0][1][1][1]
-          @authorize = true
-          $cancan_bf = 'load_and_authorize_resource' # TBD
-          # ACL ckeck
-          # acls = $authorization_module.get_crud_entry_by_subject(@class_name, nil)
-        end
-      else
-        pp sexp  # with raise
-        fail "CANCAN load_and_authorize_resource TBD #{@filename}"
-      end
-    rescue => e
-      $log.error "Unknwon load_and_authorize_resource"
-      pp sexp # with $log.error
-      raise e
-    end
-  end
-end
-
-# skip_authorize_resource
-class SkipAuthorizeResourceCommand < Abstraction::Command
-  def initialize
-    super
-    @name       = 'skip_authorize_resource'
-    @type       = 'pep'
-    @providedby = 'cancan'
-    @is_sf      = true
-  end
-
-  def abstract(sexp, sarg, filename)
-    super
-    # $log.error "CanCan.skip_authorize_resource #{$modelname} #{$filename} "
-    # skip_authorize_resource :only => [:following, :followers, :deleted_user]
-    if sexp[2][0] == :args_add_block
-      sexp_aab = sexp[2][1]
-      if sexp_aab[0][0] == :bare_assoc_hash && sexp_aab[0][1][0][0] == :assoc_new
-        sexp_an = sexp_aab[0][1][0]
-        if sexp_an[1][0] == :symbol_literal &&  sexp_an[1][1][0] == :symbol &&  sexp_an[1][1][1][0] == :@ident
-          if sexp_an[1][1][1][1] == 'only'
-            type = 'only'
-            $cancan_bf = 'load_and_authorize_resource_with_only'
-            $cancan_bf_list = {}
-          end
-        else
-          $log.error "TODO:"
-        end
-
-        if sexp_an[2][0] == :array
-          sexp_an[2][1].each do |a|
-            if a[0] == :symbol_literal && a[1][0] == :symbol && a[1][1][0] == :@ident
-              $cancan_bf_list[a[1][1][1]] = type
-            else
-              $log.error "TODO:"
-            end
-          end
-        else
-          $log.error "TODO:"
-        end
-      else
-        $log.error "TODO:"
-      end
-    else
-      $log.error "TODO:"
-    end
-  end
-end
-
-# load_resource
-# TODO
-class LoadResourceCommand < LoadAndAuthorizeResourceCommand
-  def initialize
-    super
-    @name = 'load_resource'
-  end
-end
-
-# used in Controller class/method
-# e.g.
-#  authorize! :index, @user, :message => 'Not authorized as an administrator.'
-class AuthorizeCommand < Abstraction::Command
-  def initialize
-    super
-    @name       = 'authorize!'
-    @type       = 'pep'
-    @providedby = 'cancan'
-    @is_sf      = true
-  end
-
-  def abstract(sexp, sarg, filename)
-    super
-    # v0.1.0
-    # $log.error "CanCan.authorize! state=#{$state.id} #{$transition}"
-    # $state.authorize = 'TBD'  # TODO: obsolute
-    # acls = $authorization_module.get_crud_entry(sexp[2][1])  # sexp => subj/action/obj
-    # $log.error "CANCAN ACL=#{acls}"
-    # acls.each do |acl|
-    #  $state.add_cancan('command', acl[0], acl[1], acl[2]) # subj/action/obj
-    # end
-
-    # v0.2.0 set code policy automatically
-    $state.code_policy.is_authorized = true
-
-    # TODO: check args
-    # TODO: add trans for error w/ message
-    # authorize! :update, @user, :message => 'Not authorized as an administrator.'
-
-  end
-end
-
-# CanCan condition check / controller or view
-class CanQCommand < Abstraction::Command
-  def initialize
-    super
-    @name = 'can?'
-    @type = 'pep'
-    @providedby = 'cancan'
-    @is_sf = true
-  end
-
-  def abstract(sexp, sarg, filename)
-    super
-    $log.debug "CanCan.can! state=#{$state.id} #{$transition}"
-
-    # acls = $authorization_module.get_crud_entry(sexp[2][1])
-    # acls.each do |acl|
-    #   $state.add_cancan('guard', acl[0], acl[1], acl[2])
-    # end
-  end
-end
-
-# has_role?
-class HasRoleQCommand < Abstraction::Command
-  def initialize
-    super
-    @name = 'has_role?'
-    @type = 'pep'
-    @providedby = 'cancan'
-    @is_sf = true
-  end
-
-  def abstract(sexp, sarg, filename)
-    super
-    dst_code = get_ruby($transition.dst_hint)
-    # $log.error "CanCan.has_role?  state=#{$state.id} trans=#{$transition.id}, dst=#{dst_code}"
-    subject = sexp[4][1][0][1][1][1]
-    if $state.type == 'view'
-      # view with authorization check
-      # TODO: this must set trans, not a state => Or both
-      # $state.add_cancan('guard', subject, 'unknwon', 'unknwon')
-
-      # has nav check $transition is previous trans, this filter applied to the following trans
-      # TODO: check args
-    else
-      fail "CANCAN has_role? for #{$state.type}"
-    end
-  end
-end
+require 'railroadmap/rails/pdp'
 
 #################################################################################
 # Main Class for CanCan
@@ -302,14 +52,191 @@ module Rails
       @exist = true
 
       # set the name of filter used at Guard
-      $authorization_filter_list = ['has_role?']
+      $authorization_filter_list = ['has_role?', 'can?']
 
       # class level bf, load_and_authorize_resource
       # type
       #  all
       #  only
       #  except
-      $cancan_bf = nil
+      $authorization_bf = nil
+    end
+
+    # TODO: v010
+    def policy_definition(sexp)
+      # $log.error "policy_definition"
+      # pp sexp
+      set_crud_entry($block, sexp[2][1])
+      # pp @acl_table
+      # TODO: check with req policy
+    end
+
+    # v023
+    # load_and_authorize_resource
+    def global_authorization(sexp)
+      $authorization_bf_list ||= {}
+
+      if sexp.nil?
+        # ALL
+        @authorize = true
+        $authorization_bf = 'all' # TBD
+        $authorization_bf_list['all'] = true
+
+        # ACL ckeck
+        # acls = $authorization_module.get_crud_entry_by_subject(@class_name, nil)
+      elsif sexp[0] == :vcall
+        # no only|except
+        @authorize = true
+        $authorization_bf = 'all' # TBD
+        $authorization_bf_list['all'] = true
+      elsif !sexp[2].nil? && sexp[2][0] == :args_add_block
+        sexp_aab = sexp[2][1]
+        if sexp_aab[0][0] == :bare_assoc_hash
+          # load_and_authorize_resource :except => [:show]
+          # load_and_authorize_resource :except => [:index, :show, :new, :create ]
+          $log.debug "CANCAN load_and_authorize_resource w/ EXCEPT"
+          if sexp_aab[0][1][0][1][1][1][1] == 'except'
+            # Except
+            $authorization_bf_list['all'] = true
+            as = sexp_aab[0][1][0][2][1]
+            as.each do |a|
+              $authorization_bf_list[a[1][1][1]] = 'except'
+            end
+            @authorize = true
+            $authorization_bf = 'partial' # TBD
+            # ACL ckeck
+            # acls = $authorization_module.get_crud_entry_by_subject(@class_name, except)
+          elsif sexp_aab[0][1][0][1][1][1][1] == 'only'
+            # ONLY
+            @authorize = true
+            $authorization_bf = 'partial' # TBD
+            $authorization_bf_list['all'] = false
+            as = sexp_aab[0][1][0][2][1]
+            as.each do |a|
+              $authorization_bf_list[a[1][1][1]] = 'only'
+            end
+            # ACL ckeck
+            # TODO: acls = $cancan.get_crud_entry_by_subject(@class_name, nil, only)
+          elsif sexp_aab[0][1][0][0] == :assoc_new
+            sexp_an = sexp_aab[0][1][0]
+            if sexp_aab[0][1][0][1][0] == :@label
+              if sexp_aab[0][1][0][1][1] == 'class:'
+                # If the model class is namespaced differently than the controller
+                # specify the :class option.
+                # e.g. load_and_authorize_resource class: Message
+                model =  sexp_aab[0][1][0][2][1][1] if sexp_aab[0][1][0][2][0] == :var_ref && sexp_aab[0][1][0][2][1][0] == :@const
+                $log.debug "CANCAN load_and_authorize_resource TODO: #{$filename} assinged #{model}'s' policy"
+                puts "    CANCAN: load_and_authorize_resource => set '#{model}' policy to #{$filename} (a)"
+                # set flags
+                $authorization_bf = 'all'
+                $authorization_bf_list['all'] = true
+              else
+                $log.error "CANCAN load_and_authorize_resource UNKNOWN #{$filename}"
+                pp sexp[2]
+              end
+            elsif sexp_an[1][0] == :symbol_literal && sexp_an[1][1][0] == :symbol && sexp_an[1][1][1][0] == :@kw
+              if sexp_an[1][1][1][1] == 'class'
+                if sexp_an[2][0] == :symbol_literal && sexp_an[2][1][0] == :string_content && sexp_an[2][1][1][0] == :@tstring_content
+                  model = sexp_an[2][1][1][1]
+                  $log.debug "CANCAN load_and_authorize_resource TODO: #{$filename} assinged #{model}'s' policy"
+                  puts "    CANCAN: load_and_authorize_resource => set '#{model}' policy to #{$filename} (b)"
+                  # set flags
+                  $authorization_bf = 'all'
+                  $authorization_bf_list['all'] = true
+                elsif sexp_an[2][0] == :string_literal && sexp_an[2][1][0] == :string_content && sexp_an[2][1][1][0] == :@tstring_content
+                  model = sexp_an[2][1][1][1]
+                  $log.debug "CANCAN load_and_authorize_resource TODO: #{$filename} assinged #{model}'s' policy"
+                  puts "    CANCAN: load_and_authorize_resource => set '#{model}' policy to #{$filename} (c)"
+                  # set flags
+                  $authorization_bf = 'all'
+                  $authorization_bf_list['all'] = true
+                else
+                  $log.error "CANCAN load_and_authorize_resource UNKNOWN #{$filename}"
+                  pp sexp[2]
+                end
+              else
+                $log.error "CANCAN load_and_authorize_resource UNKNOWN #{$filename}"
+              end
+            else
+              $log.error "CANCAN load_and_authorize_resource UNKNOWN #{$filename}"
+              pp sexp[2]
+            end
+          else
+            $log.error "CANCAN load_and_authorize_resource UNKNOWN #{$filename}"
+            pp sexp[2]
+            pp sexp_aab[0][0]
+            # TODO: save to ERROR
+          end
+        else
+          subject = sexp[2][1][0][1][1][1]
+          @authorize = true
+          $authorization_bf = 'all' # TBD
+          # ACL ckeck
+          # acls = $authorization_module.get_crud_entry_by_subject(@class_name, nil)
+        end
+      elsif sexp[2].nil?
+        $log.error "TODO: no sexp[2]"
+        pp sexp
+      else
+        pp sexp  # with raise
+        fail "CANCAN load_and_authorize_resource TBD #{@filename} #{$filename}"
+      end
+    end
+
+    # skip_authorize_resource
+    def anti_global_authorization(sexp)
+      $authorization_bf_list ||= {}
+      # $log.error "CanCan.skip_authorize_resource #{$modelname} #{$filename} "
+      # skip_authorize_resource :only => [:following, :followers, :deleted_user]
+      if sexp[2][0] == :args_add_block
+        sexp_aab = sexp[2][1]
+        if sexp_aab[0][0] == :bare_assoc_hash && sexp_aab[0][1][0][0] == :assoc_new
+          sexp_an = sexp_aab[0][1][0]
+          if sexp_an[1][0] == :symbol_literal &&  sexp_an[1][1][0] == :symbol &&  sexp_an[1][1][1][0] == :@ident
+            if sexp_an[1][1][1][1] == 'only'
+              type = 'skip'
+              $authorization_bf = 'partial'
+            end
+          else
+            $log.error "TODO:"
+          end
+
+          if sexp_an[2][0] == :array
+            sexp_an[2][1].each do |a|
+              if a[0] == :symbol_literal && a[1][0] == :symbol && a[1][1][0] == :@ident
+                $authorization_bf_list[a[1][1][1]] = type
+              else
+                $log.error "TODO:"
+              end
+            end
+          else
+            $log.error "TODO:"
+          end
+        else
+          $log.error "TODO:"
+        end
+      else
+        $log.error "TODO:"
+      end
+    end
+
+    # used in Controller class/method
+    # e.g.
+    #  authorize! :index, @user, :message => 'Not authorized as an administrator.'
+    # TODO: check args
+    # TODO: add trans for error w/ message
+    def local_authorization(sexp)
+      $log.error "TODO:" if $state.nil?
+
+      $state.code_policy.is_authorized = true
+
+      # include authentication check
+      if $state.code_policy.is_authenticated.nil?
+        $log.error "local_authorization() added is_authenticated = true"
+        $state.code_policy.is_authenticated = true
+      elsif $state.code_policy.is_authenticated == false
+        $log.error "local_authorization() authorization check for public state???"
+      end
     end
 
     # Requiremrnts
@@ -320,29 +247,9 @@ module Rails
     # Abstraction::SecurityFunction
     def add_commands
       super
-      # CanCan commands
-      c1 = AuthorizeCommand.new
-      $abst_commands[c1.name] = c1
-
-      c2 = CanQCommand.new
-      $abst_commands[c2.name] = c2
-
-      c3 = CanCommand.new
-      $abst_commands[c3.name] = c3
-
-      c4 = LoadAndAuthorizeResourceCommand.new
-      $abst_commands[c4.name] = c4
-
-      c5 = SkipAuthorizeResourceCommand.new
-      $abst_commands[c5.name] = c5
-
-      c5 = HasRoleQCommand.new
-      $abst_commands[c5.name] = c5
     end
 
-    #
-    # TODO
-    #
+    # TODO: v010
     def get_roles
       return ['anon', 'user', 'admin']
     end
@@ -385,8 +292,8 @@ module Rails
     end
 
     # parse and set ACL
-    #
     # also check the weakness of PDP style
+    # TODO: v010
     def set_crud_entry(condblk, sexp)
       action  = 'unknown'
       object  = 'unknown'
@@ -477,6 +384,7 @@ module Rails
         end
 
         # TODO: this is v010
+        $log.debug "TODO: Ambiguous policy definition"
         w = {}
         w['warning_type'] = 'Ambiguous policy definition'
         w['message'] = "ACL definition with #{condblk.type}, #{guard}, #{action}, #{object}(#{object_type})"
@@ -499,6 +407,7 @@ module Rails
         end
 
         # TODO: this is v010
+        $log.debug "TODO: Ambiguous policy definition"
         w = {}
         w['warning_type'] = 'Ambiguous policy definition'
         w['message'] = "Nested ACL definition with #{condblk.type}, #{guard}, #{action}, #{object}(#{object_type})"
@@ -597,7 +506,6 @@ module Rails
       end
     end
 
-    #
     # Look up subject(hash)
     # return [subj, action, obj]
     #
@@ -818,70 +726,149 @@ module Rails
     end
 
     #--------------------------------------------------------------------------
-    # Code side
+    # Code side,  v0.2.3
     # set PEP defined by class scope
+    # TODO: PDP common
+    #
+    # Cumbersome CanCan PDP/PEP style
+    #   M  user ||= User.new
+    #   C  load_and_authorize_resource
+    #      index,show => public
+    #      all => admin
+    #   Set this flag in railroadmap/abstraction.rb
+    #     $cancan_public_read_all = true
+    #
     def pep_assignment
-      unless $cancan_bf.nil?
-        if $cancan_bf == 'load_and_authorize_resource'
+      if $authorization_bf.nil?
+        # no BF => SKIP
+      else
+        if $authorization_bf == 'all'
           $action_list.each do |k, v|
-            v[1].code_policy.is_authorized = true unless v[1].nil?
+            set_is_authorized(v[1]) unless v[1].nil?
           end
-        elsif $cancan_bf == 'load_and_authorize_resource_with_only'
-          $action_list.each do |k, v|
-            unless v[1].nil?
-              if $cancan_bf_list[k] == 'only'
-                v[1].code_policy.is_authorized = true
-              else
-                v[1].code_policy.is_authorized = false
+        elsif $authorization_bf == 'partial'
+          if $authorization_bf_list['all'] == true
+            $action_list.each do |k, v|
+              unless v[1].nil?
+                if $authorization_bf_list[k] == 'except'
+                  v[1].code_policy.is_authorized = false
+                elsif $authorization_bf_list[k] == 'skip'
+                  v[1].code_policy.is_authorized = false
+                else
+                  set_is_authorized(v[1])
+                end
+              end
+            end
+          elsif $authorization_bf_list['all'] == false
+            $action_list.each do |k, v|
+              unless v[1].nil?
+                if $authorization_bf_list[k] == 'only'
+                  set_is_authorized(v[1])
+                else
+                  v[1].code_policy.is_authorized = false
+                end
+              end
+            end
+          else
+            # Missing 'all' flag => true?
+            # TODO: refactoring
+            $action_list.each do |k, v|
+              unless v[1].nil?
+                if $authorization_bf_list[k] == 'except'
+                  v[1].code_policy.is_authorized = false
+                elsif $authorization_bf_list[k] == 'skip'
+                  v[1].code_policy.is_authorized = false
+                else
+                  set_is_authorized(v[1])
+                end
               end
             end
           end
         else
-          $log.error "TODO: #{$cancan_bf}"
+          $log.error "TODO: #{$authorization_bf}"
         end
-        $cancan_bf = nil
+
+        $authorization_bf = nil
+      end
+    end
+
+    def set_is_authorized(state)
+      if $cancan_public_read_all == true
+        if state.action == 'index' || state.action == 'show'
+          # Read
+          if !$cancan_public_read_all_list.nil? && $cancan_public_read_all_list[state.domain] == 'except'
+            # SKIP
+            puts "     #{state.id} => authorized"
+          else
+            state.code_policy.is_authorized = false
+            return
+          end
+        end
+      end
+
+      state.code_policy.is_authorized = true
+      if state.code_policy.is_authenticated != true
+        state.code_policy.is_authenticated = true
+        state.code_policy.authentication_comment  += " w/ authorization"
       end
     end
 
     # call
     def compleate_pep_assignment
       super
-      puts "    CanCan: compleate PEP assignment TODO"
-
+      puts "    CanCan: compleate PEP assignment"
       # Global Controller
       # $log.error "TODO"
     end
 
     #--------------------------------------------------------------------------
     # Req. side
-    def print_sample_requirements_base_policies
-      puts "  'role' => {         # CanCan"
-      puts "    is_authenticated: true,"
-      puts "    is_authorized:    true, # Admin only"
-      puts "    level: 15,  # Mandatory?"
-      puts "    color: 'red',"
-      puts "    roles:  ["
-      puts "      { role: 'admin',  action: 'CRUD' },"
-      puts "      { role: 'user',   action: 'R' } ]"
-      puts "  },"
-      puts "  'users_role' => {   # CanCan (model only)"
-      puts "    is_authenticated: true,"
-      puts "    is_authorized:    true,"
-      puts "    level: 15,  # Mandatory?"
-      puts "    roles:  [ { role: 'user', action: 'CRUD' } ]"
-      puts "  },"
-      puts "  'ability' => {      # CanCan (model only)"
-      puts "    is_authenticated: true,"
-      puts "    is_authorized:    true,"
-      puts "    level: 15,  # Mandatory?"
-      puts "    roles:  [ { role: 'user', action: 'CRUD' } ]"
-      puts "   },"
-      return ['role', 'users_role', 'ability']
-    end
+    # v023 uses JSON
+    # RSpec: spec/rails/requirements/json_spec.rb
+    def append_sample_requirements(json, model_list)
+      role = {}
+      role['is_authenticated'] = true
+      role['is_authorized'] = true
+      role['level'] = 15
+      role['color'] = 'red'
 
-    def print_sample_requirements_mask_policies
-      puts ""
-      return []
+      r0 = {}
+      r0['role'] = 'admin'
+      r0['action'] = 'CRUD'
+
+      r1 = {}
+      r1['role'] = 'user'
+      r1['action'] = 'R'
+
+      role['roles'] = [r0, r1]
+      role['commnets'] = 'CanCan role'
+      json['asset_base_policies']['role'] = role
+
+      r2 = {}
+      r2u = {}
+      r2u['role'] = 'user'
+      r2u['action'] = 'CRUD'
+
+      users_role = {}
+      users_role['is_authenticated'] = true
+      users_role['is_authorized'] = true
+      users_role['level'] = 15
+      users_role['roles'] = [r2u]
+      users_role['commnets'] = 'CanCan (model only)'
+      json['asset_base_policies']['users_role'] = users_role
+
+      # CanCan (model only)
+      ability = {}
+      ability['is_authenticated'] = true
+      ability['is_authorized'] = true
+      ability['level'] = 15
+      ability['roles'] = [r2u]
+      ability['commnets'] = 'CanCan (model only)'
+      json['asset_base_policies']['ability'] = ability
+
+      model_list['role'] = true
+      model_list['users_role'] = true
+      model_list['ability'] = true
     end
   end
 end

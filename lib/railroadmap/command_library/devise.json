@@ -1,0 +1,346 @@
+// devise.json
+{
+  // Class level
+  "devise": { // has custom abstraction
+    "type":       "config",
+    "subtype":    "TODO",
+    "is_sf":       true,
+    "sf_type":    "config_authentication",
+    "testcase_type": "none",
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  // Filter
+  "authenticate_user!": { // no custom abstraction
+    "type":       "filter",
+    "subtype":    "TODO",
+    "is_sf":       true,
+    "sf_type":     "authentication",
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "authenticate_scope!": { // no custom abstraction
+    "type":       "filter",
+    "subtype":    "TODO",
+    "is_sf":       true,
+    "sf_type":     "authentication",
+    "testcase_type": "none",  // TODO:
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "allow_params_authentication!": { // no custom abstraction
+    "type":       "filter",
+    "subtype":    "TODO",
+    "is_sf":       true,
+    "sf_type":     "params_authentication",
+    "testcase_type": "none",
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "require_no_authentication": { // no custom abstraction
+    "type":       "filter",
+    "subtype":    "TODO",
+    "is_sf":       true,
+    "sf_type":     "except_authentication",
+    "testcase_type": "none",
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  // 
+  "sign_up": { // no custom abstraction
+    "type":          "operation",
+    "subtype":       "TODO",
+    "is_sf":         true,
+    "testcase_type": "none",
+    "providedby":    "devise",
+    "status":        "todo"
+  },
+  "sign_in": { // no custom abstraction
+    "type":       "operation",
+    "subtype":    "TODO",
+    "is_sf":       true,
+    "testcase_type": "none",
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "sign_out": { // no custom abstraction
+    "type":       "operation",
+    "subtype":    "TODO",
+    "is_sf":       true,
+    "testcase_type": "none",
+    "providedby": "devise",
+    "status":     "todo"
+  },
+
+  "set_flash_message": { // no custom abstraction
+    "type":       "operation",
+    "subtype":    "TODO",
+    "is_sf":       true,
+    "testcase_type": "none",
+    "providedby": "devise",
+    "status":     "todo"
+  },
+
+  // Helper/path_for
+  "after_sign_up_path_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "after_sign_in_path_for": { // no custom abstraction
+    "type":       "helper",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "after_sign_out_path_for": { // no custom abstraction
+    "type":       "helper",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "after_unlock_path_for": { // no custom abstraction
+    "type":       "helper",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "after_resending_confirmation_instructions_path_for": { // no custom abstraction
+    "type":       "helper",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "after_update_path_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "after_inactive_sign_up_path_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  // app/controllers/devise/omniauth_callbacks_controller.rb
+  "after_omniauth_failure_path_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  // app/controllers/devise/unlocks_controller.rb
+  "after_sending_unlock_instructions_path_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "after_confirmation_path_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "after_sending_reset_password_instructions_path_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+
+  // http://rubydoc.info/github/plataformatec/devise/master/Devise/PasswordsController:after_resetting_password_path_for
+  "after_resetting_password_path_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+
+  // http://rubydoc.info/github/plataformatec/devise/master/Devise/Controllers/StoreLocation
+  // http://www.rdoc.info/github/plataformatec/devise/master/Devise/Controllers/StoreLocation:stored_location_for
+  "stored_location_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "store_location_for": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+
+  // Helper/path
+  "signed_in_root_path": { // no custom abstraction
+    "type":       "helper",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "new_registration_path": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "new_session_path": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  // redirect_location is deprecated?
+  // https://github.com/plataformatec/devise/issues/1349
+  "redirect_location": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+
+  // https://groups.google.com/forum/#!msg/plataformatec-devise/rDpHgFVQa9Y/K9qI7m9SZfIJ
+  // deprecated? 1.5
+  "successful_and_sane?": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+
+  // https://github.com/plataformatec/devise/issues/1737
+  // removed in 2.0
+  "render_with_scope": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+
+  "expire_session_data_after_sign_in!": { // no custom abstraction
+    "type":       "helper",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  // Lib
+  "is_navigational_format?": { // no custom abstraction
+    "type":       "lib",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "clean_up_passwords": { // no custom abstraction
+    "type":       "lib",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "respond_to?": { // no custom abstraction
+    "type":       "lib",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  // controller
+  "unlockable?": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "respond_with_navigational": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "update_needs_confirmation?": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "successfully_sent?": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "build_resource": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "serialize_options": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+
+  "failed_strategy": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  "failure_message": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  // app/controllers/devise/sessions_controller.rb
+  "auth_options": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  },
+  // app/controllers/devise/passwords_controller.rb
+  "assert_reset_token_passed": { // no custom abstraction
+    "type":       "controller",
+    "subtype":    "TODO",
+    "is_sf":       false,
+    "providedby": "devise",
+    "status":     "todo"
+  }
+}

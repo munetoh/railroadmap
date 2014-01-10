@@ -1,3 +1,15 @@
+=== 0.2.3 / 2014-01-10 (Seiji Munetoh)
+* rvm: 1.9.2 to 1.9.3
+* update the command_library (devise, cancan, the_role, mongo_mapper)
+* update the transition checker
+* added acceptance-test capability. for now it supports Cucumber
+* added new class, gems and brakeman
+* update the dashboard HTML. re-formation of the tabs
+* changed requirements file format, ruby to JSON
+* added simplecov for measurement of test
+* fixed action list at the dashboard->asset->model
+*   check model alias and list routed actions only
+
 === 0.2.2 / 2013-12-12 (Seiji Munetoh)
 * added command_library, now we use JSON to define the command behavior
 * cleanup spec files

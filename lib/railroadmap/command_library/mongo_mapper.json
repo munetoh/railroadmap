@@ -1,0 +1,14 @@
+// mongo_mapper
+// http://mongomapper.com/
+{
+  "key": {
+    "type":       "model",
+    "providedby": "mongo_mapper",
+    "status":     "todo"
+  },
+  "many": {
+    "type":       "model",
+    "providedby": "mongo_mapper",
+    "status":     "todo"
+  }
+}

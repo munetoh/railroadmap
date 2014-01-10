@@ -49,3 +49,21 @@ end
 
 require 'rake/testtask'
 Rake::TestTask.new
+
+require 'rubocop/rake_task'
+desc 'Run RuboCop on the lib directory'
+Rubocop::RakeTask.new(:rubocop) do |task|
+  task.patterns = [
+    'lib/*.rb',
+    'lib/railroadmap/*.rb',
+    'lib/railroadmap/*/*.rb',
+    'lib/railroadmap/*/*/*.rb',
+    'spec/*.rb',
+    'spec/*/*.rb',
+    'spec/*/*/*.rb'
+  ]
+  # only show the files with failures
+  #task.formatters = ['files']
+  # don't abort rake on failure
+  task.fail_on_error = false
+end

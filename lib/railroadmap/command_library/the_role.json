@@ -1,0 +1,73 @@
+// the_role.json
+// https://github.com/the-teacher/the_role
+{
+  // Class level
+  "role_required": {
+    "type":       "filter",
+    "is_sf":      true,
+    "sf_type":    "authorization",
+    "providedby": "the_role"
+  },
+  "owner_required": {
+    "type":       "filter",
+    "is_sf":      true,
+    "sf_type":    "owner_authorization",
+    "providedby": "the_role"
+  },
+  // app/models/concerns/the_role_base.rb:  def any_role? roles_hash = {}
+  "any_role?": {
+    "type":       "unknown_filter",
+    "providedby": "the_role"
+  },
+  // The_Role do alias "has?"" => "has_role?", so put has? dummy here , "any?" also
+  "has?": {
+    "type":       "unknown",
+    "providedby": "the_role"
+  },
+
+  "has_role?": {
+    "type":          "filter",
+    "subtype":       "conditional_authorization",
+    "is_sf":          true,
+    "sf_type":       "authorization",
+    "testcase_type": "sampling",
+    "providedby":    "cancan",
+    "status":        "todo"
+  },
+
+  "any?": {
+    "type":       "unknown",
+    "providedby": "the_role"
+  },
+  // the_role/app/controllers/admin/role_sections_controller.rb
+  "section_rule_names": {
+    "type":       "unknown_filter",
+    "providedby": "the_role"
+  },
+  // the_role/app/controllers/admin/roles_controller.rb
+  "role_find": {
+    "type":       "unknown_filter",
+    "providedby": "the_role"
+  },
+  // lib/the_role/config.rb   config_accessor :layout, :default_user_role
+  "layout": {
+    "type":       "unknown_filter",
+    "providedby": "the_role"
+  },
+  // the_role/app/controllers/admin/role_sections_controller.rb
+  "redirect_to_edit": {
+    "type":       "unknown_filter",
+    "providedby": "the_role"
+  },
+  // app/controllers/the_role_controller.rb:  def role_access_denied
+  "role_access_denied": {
+    "type":       "unknown_filter",
+    "providedby": "the_role"
+  },
+  // Ignore
+  "edit_admin_role_path": {
+    "type":       "path",
+    "providedby": "the_role",
+    "status":     "ignore"
+  }
+}

@@ -26,7 +26,10 @@ module Abstraction
             add_transition_by_command(ident, $state, $guard, sexp, @filename)
           end
 
-          # run abstract()
+          # v023
+          command_action($abst_commands[ident], sexp)
+
+          # run abstract() will be deprecated => command_action
           $abst_commands[ident].abstract(nil, nil, @filename)  # TODO: sexp?
         end
       end
@@ -153,8 +156,7 @@ module Abstraction
       # Load controller/*rb file
       # ruby => AST => abst model
       def load(modelname, filename)
-        @modelname = modelname
-        $modelname = modelname
+        set_modelname(modelname)
         @filename = filename
         $filename = filename # as global
 
@@ -184,6 +186,18 @@ module Abstraction
         # parse
         parse_sexp(0, sexp)
 
+        update_actions
+
+        # Global filters => each action
+        $authorization_module.pep_assignment unless $authorization_module.nil?
+      end
+
+      def set_modelname(modelname)
+        @modelname = modelname
+        $modelname = modelname
+      end
+
+      def update_actions
         # disclose omitted controllers
         # check with routemap
         $action_list.each do |k, v|
@@ -195,6 +209,7 @@ module Abstraction
 
             if $abst_states[dst_id].nil?
               # no V for C
+              s = add_state('controller', domain, @filename)
             else
               # add state and trans
               s = add_state('controller', domain, @filename)
@@ -212,9 +227,6 @@ module Abstraction
             end
           end
         end
-
-        # Global filters => each action
-        $authorization_module.pep_assignment unless $authorization_module.nil?
       end
 
       # Dump

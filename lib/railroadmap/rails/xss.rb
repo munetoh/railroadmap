@@ -25,8 +25,14 @@ module Rails
       $log.debug "XSS trace raw"
       # Output
       $abst_dataflows.each do |n1, d1|
-        if d1.type == 'raw_out'
-          $log.debug "XSS   #{n1} has raw output. theck the state that input #{d1.src_id}, output #{d1.dst_id}"
+        if d1.subtype == 'raw_out'
+          if $enable_stdout
+            print "\e[31m"  # red
+            puts "      #{n1} has raw output."
+            print "\e[0m" # reset
+          end
+          $log.debug "XSS   #{n1} has raw output. check the state that input #{d1.src_id}, output #{d1.dst_id}"
+
           d1.xss_trace = true
           $abst_states[d1.dst_id].xss_out << d1
           # Input
@@ -51,7 +57,7 @@ module Rails
           w['location'] = nil
           w['user_input'] = nil
           # put explicit raw here => programmer should have some intentions => but test
-          w['confidence'] = 'Medium'  # Weak Medium High
+          w['confidence'] = 'High'  # Weak Medium High
           w['hit_state'] = d1.dst_id
           w['hit_variable'] = d1.src_id
           $warning.add(w)

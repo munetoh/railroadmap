@@ -1,15 +1,6 @@
 // Unknown command
 // TODO: classify them
 {
-  // TODO
-  // ActiveSupport::Deprecation.warn
-  // http://api.rubyonrails.org/classes/ActiveSupport/Deprecation.html
-  // http://d.hatena.ne.jp/kitokitoki/20110507/p1
-  "warn": {
-    "type":       "unknown",
-    "providedby": "unknown",
-    "status":     "todo"
-  },
   // select
   // http://railsdoc.com/references/select
   "select": {

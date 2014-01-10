@@ -46,3 +46,7 @@ MultilineTernaryOperator:
 
 Blocks:
   Enabled: false
+
+# SPEC 
+HandleExceptions:
+  Enabled: false

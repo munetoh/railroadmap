@@ -1,0 +1,54 @@
+<div class="dashboard_container" id="<%= title.gsub(/[^a-zA-Z]/, '') %>">
+  <h2>
+    <span class="group_name"><%= title %></span>
+    (<span class="covered_percent"><span class="<%= warning_css_class(unclear_command_count) %>"><%= unclear_command_count %></span></span>
+     unclear definitions)
+  </h2>
+  <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
+
+
+  <hr/> <hr/> 
+  <h3>
+    Command list (Model-View-Controller)
+    (<span class="<%= warning_css_class(unclear_command_count) %>"><b><%= unclear_command_count %></b> 
+    unclear definition </span>)
+  </h3>
+  <div>
+  Update RailroadMap command library, OR railroadmap/abstraction.rb to support unknown command.
+  </div>
+
+  <table class="command_list">
+    <thead>
+      <tr>
+        <th class="strong"> Command </th>
+        <th class="strong"> Count </th>
+        <th class="strong"> Provided by </th>
+        <th class="strong"> Type </th>
+        <th class="strong"> Sub-type </th>
+        <th class="strong"> Trans? </th>
+        <th class="strong"> Dataflow? </th>
+        <th class="strong"> Security function? </th>
+        <th class="strong"> Status </th>
+        <th class="strong"> Comments </th>
+      </tr>
+    </thead>
+    <tbody>
+    <% commands.each do |k, c| %>
+      <tr class="<%= unclear_css_class(c.unclear) %>">
+        <td><%= k %></td>
+        <td><%= c.count.to_s %></td>
+        <td><%= c.providedby %></td>
+        <td><%= c.type %></td>
+        <td><%= c.subtype %></td>
+        <td><%= c.has_trans %></td>
+        <td><%= c.has_dataflow %></td>
+        <td><%= c.is_sf %></td>
+        <td><%= c.status %></td>
+        <td><%= c.comment %></td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+  <!-- 1) change td, 2) update transition_list public/application.js  -->
+
+</div>

@@ -207,31 +207,63 @@ class Dashboard
     warnings = smodel.warnings
     railroadmap_warning_count = warnings.size
 
-    errors = smodel.errors
-    railroadmap_errors_count = smodel.errors_count
-
-    brakeman_warnings = smodel.brakeman_warnings
-    brakeman_warning_count = brakeman_warnings.size
+    # Brakeman
+    if $brakeman.nil?
+      brakeman_warning_count = 0
+      $brakeman = Brakeman.new
+    else
+      brakeman_warning_count = $brakeman.warnings.size
+    end
 
     total_warning_count = railroadmap_warning_count + brakeman_warning_count
+
+    railroadmap_fp_warning_count = 0
+    warnings.each do |key, warning|
+      if warning['comment'] == 'True-Positive'
+        railroadmap_fp_warning_count += 1
+        warning['red'] = true
+      else
+        warning['red'] = false
+      end
+    end
+
     template('warning').result(binding)
   end
 
-  # Design Tab
-  def design(title, smodel)
-    design = smodel.design
-    # TODO: calc  coverage
-    template('design').result(binding)
+  def error(title, smodel)
+    errors = smodel.errors
+    railroadmap_errors_count = smodel.errors_count
+    brakeman_error_count = $brakeman.errors.size
+    total_error_count = railroadmap_errors_count + brakeman_error_count
+    template('error').result(binding)
   end
 
-  # navigation model (table) Tab
+  def gems(title, smodel)
+    gems_warning_count = 0
+    $gems.gems.each do |k, g|
+      gems_warning_count += 1 unless g[:warnings].nil?
+    end
+    template('gems').result(binding)
+  end
+
+  def command(title, smodel)
+    commands = smodel.commands
+    unclear_command_count = smodel.unclear_command_count
+    template('command').result(binding)
+  end
+
+  # Asset tab
+  # Role, States
+  def asset(title, smodel)
+    design = smodel.design
+    # TODO: calc  coverage
+    template('asset').result(binding)
+  end
+
+  # Navigation model (table) Tab
   def navmodel(title, smodel)
     # TODO: calc  coverage
     transitions = smodel.transitions
-    variables = smodel.variables
-    dataflows = smodel.dataflows
-    raw_out_count = smodel.raw_out_count
-    downsteram_policy_count = smodel.downsteram_policy_count
 
     # TODO: Trans
     unclear = 0
@@ -239,6 +271,26 @@ class Dashboard
       unclear += t.setup4dashboard
     end
     template('navmodel').result(binding)
+  end
+
+  def dataflow(title, smodel)
+    # variables = smodel.variables
+    dataflows = smodel.dataflows
+    raw_out_count = smodel.raw_out_count
+    downsteram_policy_count = smodel.downsteram_policy_count
+    unclear = 0
+    template('dataflow').result(binding)
+  end
+
+  def uat(title, smodel)
+    unclear_count = 0
+    failed_count = 0
+    $uat ||= {} # nil
+    $uat.each do |k, t|
+      failed_count += 1 if t[:result] == 'failed'
+      unclear_count += 1 if t[:result] == 'unknown'
+    end
+    template('uat').result(binding)
   end
 
   # navigation model (rational) Tab

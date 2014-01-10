@@ -1,6 +1,71 @@
 // rails
 {
+  // Security functions
+  // Rails3
+  "before_filter" : {
+    "type":       "filter",
+    "subtype":    "before_filter",
+    "providedby": "rails",
+    "is_sf":      true,
+    "sf_type":    "before_filter",
+    "status":     "beta"
+  },
+
+  // http://apidock.com/rails/ActionController/Filters/ClassMethods/prepend_before_filter
+  // http://d.hatena.ne.jp/favril/20100722/1279781635
+  "prepend_before_filter" : {
+    "type":       "filter",
+    "subtype":    "before_filter",
+    "providedby": "rails",
+    "is_sf":      true,
+    "sf_type":    "before_filter",
+    "testcase_type": "none",  // test => caled filter
+    "status":     "beta"
+  },
+
+  // http://apidock.com/rails/ActionController/Filters/ClassMethods/append_before_filter
+  "append_before_filter" : {
+    "type":       "filter",
+    "subtype":    "before_filter",
+    "providedby": "rails",
+    "is_sf":      true,
+    "sf_type":    "before_filter",
+    "testcase_type": "none",  // test => caled filter
+    "status":     "beta"
+  },
+
+  // attr_accessible
+  // http://apidock.com/rails/ActiveRecord/Base/attr_accessible/class
+  // Rails3 protection for Mass Assignment
+  "attr_accessible" : {
+    "type":       "filter",
+    "subtype":    "before_filter",
+    "providedby": "rails",
+    "is_sf":      true,
+    "sf_type":    "massassignment_filter",
+    "status":     "beta"
+  },
+
+  // http://apidock.com/rails/ActionController/Filters/ClassMethods/skip_before_filter
+  "skip_before_filter" : {
+    "type":       "filter",
+    "subtype":    "skip_before_filter",
+    "providedby": "rails",
+    "is_sf":      true,
+    "sf_type":    "skip_before_filter",
+    "status":     "beta"
+  },
+  // Rails4
+  "before_action" : {
+    "type":       "filter",
+    "subtype":    "before_filter",
+    "providedby": "rails",
+    "is_sf":      true,
+    "sf_type":    "before_filter",
+    "status":     "beta"
+  },
   // From
+  // http://apidock.com/rails/ActionView/Helpers/FormHelper/form_for
   "form_for": {
      "type":       "input_dataflow",  // form_for form_tag
      "subtype":    "form",
@@ -58,6 +123,32 @@
     "subtype":    "post",
     "has_trans":  true,
     "providedby": "rails"
+  },
+
+  // Dataflow/ filter OR anti-filter
+  "h": {
+    "type":       "filter",
+    "subtype":    "injection",
+    "is_sf":       true,
+    "sf_type":    "xss",
+    "providedby": "rails"
+  },
+  "sanitize": {
+    "type":       "filter",
+    "subtype":    "injection",
+    "is_sf":       true,
+    "sf_type":    "xss",
+    "providedby": "rails"
+  },
+  "raw": {
+    "type":         "filter",
+    "subtype":      "injection",
+    "has_dataflow": true,
+    "is_inbound":   false,
+    "is_outbound":  true,
+    "is_sf":        true,
+    "sf_type":      "anti_xss",
+    "providedby":   "rails"
   },
 
 
@@ -164,6 +255,16 @@
      "providedby": "rails"
   },
 
+  // form_for - number_field
+  // http://apidock.com/rails/ActionView/Helpers/FormHelper/form_for
+  "number_field": {
+     "type":       "dataflow",
+     "subtype":    "output",
+     "is_inbound":  true,
+     "is_outbound": true,
+     "providedby": "rails"
+  },
+
   // hidden_field_tag
   // http://railsdoc.com/references/hidden_field
   "hidden_field": {
@@ -190,11 +291,16 @@
      "providedby": "rails"
   },
 
+  // Security functions
   // TODO: supported belows
   "protect_from_forgery": {
-    "type":       "unknown_filter",
+    "type":       "filter",
+    "subtype":    "global_filter",
+    "is_sf":       true,
+    "sf_type":    "csrf",
     "providedby": "rails"
   },
+
   // RAILS_ROOT/lib/authenticated_system.rb?
   "login_required": {
     "type":       "unknown_filter",
@@ -638,5 +744,22 @@
      "providedby":  "rails",
      "remidiation": "TBD",
      "severity":    1
+  },
+  // Model
+  // http://api.rubyonrails.org/classes/ActiveRecord/Scoping/Named/ClassMethods.html#method-i-scope
+  "scope": {
+    "type":       "search",
+    "providedby": "rails",
+    "status":     "todo"
+  },
+
+  // ActiveSupport::Deprecation.warn
+  // http://8raystech.com/2011/02/07/how-to-deprecate-methods-and-constants-in-rails-3
+  // http://api.rubyonrails.org/classes/ActiveSupport/Deprecation.html
+  // http://d.hatena.ne.jp/kitokitoki/20110507/p1
+  "warn": {
+    "type":       "logging",
+    "providedby": "rails",
+    "status":     "todo"
   }
 }

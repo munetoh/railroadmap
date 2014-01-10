@@ -94,6 +94,7 @@ module Abstraction
           # all
           s.code_policy.is_authenticated = @is_authenticated
         end
+
         # No auth flag
         if @is_noauthentication.class == Hash
           if @is_noauthentication[dm[1]] == true
@@ -144,7 +145,6 @@ module Abstraction
           $log.debug "skip protected contoller2 #{src_id} -> #{dst_id}"
           return nil
         elsif src.type == 'model'
-          $log.error "No trans from Model, #{src_id} #{filename}"
           fail "FATAL"
         else
           # add
@@ -162,7 +162,6 @@ module Abstraction
           $has_transition = true
           $abst_transitions_count += 1
           $transition = t  # current transition
-          # DEBUG
           return t
         end
       end
@@ -185,7 +184,6 @@ module Abstraction
       def lookup_variable(domain, name)
         dm =  domain.split('#')
         dm[0] = 'user' if dm[0] =~ /devise/
-
         id = 'S_' + dm[0] + '#' + name
         return id unless $abst_variables[id].nil?
 
@@ -223,6 +221,7 @@ module Abstraction
 
         $abst_dataflows[d.id] = d
         $abst_dataflows_count += 1
+
         d
       end
 
@@ -765,6 +764,7 @@ module Abstraction
           else
             # def => state
             # Add state
+            @modelname ||= 'unknown'
             domain = @modelname + '#' + @def_name
             s = add_state('controller', domain, @filename)
             unless s.nil?
@@ -900,50 +900,6 @@ module Abstraction
         end  # each
       end
 
-      # JSON
-      def add_json_command_list(filename)
-        command_list = nil
-        open(filename) do |io|
-          command_list = JSON.load(io)
-        end
-        # pp command_list
-        command_list.each do |k, v|
-          type       = v["type"]
-          providedby = v["providedby"] || 'app'
-          if $abst_commands[k].nil?
-            if type == 'transition'
-              c = add_trans_command_to_list(k, v["subtype"])
-              c.transition_path = v["transition_path"]   # Force path
-              c.providedby      = providedby
-            elsif type == 'filter' then
-              $log.debug "init_commands() - TODO: add app filter command #{k}"
-              c = Abstraction::Command.new
-              c.name       = k
-              c.type       = type
-              c.is_sf      = v["is_sf"]
-              c.sf_type    = v["sf_type"] if c.is_sf == true
-              c.providedby = providedby
-              c.status     = 'beta'
-              # DST
-              # copy dst table => extracted by compleate_filter()
-              c.dst_table = v["dest_list"] unless v["dest_num"].nil?
-              $abst_commands[c.name] = c
-            else
-              c = Abstraction::Command.new
-              c.name = k
-              c.type = type
-              c.subtype = v["subtype"] unless v["subtype"].nil?
-              c.providedby = providedby
-              c.status = 'TODO'
-              $abst_commands[c.name] = c
-            end
-          else
-            $log.error "add_json_command_list() - command/filter '#{k}' already exist"
-            fail "DEBUG"
-          end  # nil
-        end  # each
-      end
-
       def add_command_to_list(classobj)
         if $abst_commands[classobj.name].nil?
           $abst_commands[classobj.name] = classobj
@@ -1073,7 +1029,7 @@ module Abstraction
         # TODO: 2012-08-08
         if $abst_commands[name].nil?
            # Unknown command
-          $log.debug "TODO: command #{name} #{@filename} <==================== command"
+          $log.error "TODO: command #{name} #{@filename} <==================== command"
 
           # add to list
           c = Abstraction::Command.new
@@ -1089,7 +1045,8 @@ module Abstraction
           cmd = $abst_commands[name]
           get_form_for_target(sexp) if cmd.type == 'input_dataflow'
 
-          # Add trans
+          command_action(cmd, sexp)
+
           # Add trans
           if cmd.subtype == 'post'
             # submit
@@ -1107,11 +1064,207 @@ module Abstraction
 
           # Add dataflow
           if cmd.has_dataflow
+            $log.debug "has_dataflow"
             add_dataflow_by_command($abst_commands[name], $state, $guard, sarg, @filename)
           end
+
           # run abstract()
           cmd.abstract(sexp, sarg, @filename)
         end # if
+      end
+
+      def command_action(cmd, sexp)
+        # Security function
+        if cmd.is_sf
+          if $state.nil?
+            # Global/class
+          else
+            # local/state
+            cmd.location_list << { filename: @filename, state_id: $state.id }
+            if cmd.sf_type == 'anti_xss'
+              $log.debug "raw anti_xss"
+              $xss_raw_count += 1
+              $xss_raw_region = true
+              $xss_raw_files << @filename
+            end
+          end
+          # PEP
+          if cmd.sf_type == 'global_authorization'
+            $authorization_module.global_authorization(sexp)
+          elsif cmd.sf_type == 'anti_global_authorization'
+            $authorization_module.anti_global_authorization(sexp)
+          elsif cmd.sf_type == 'local_authorization'
+            $authorization_module.local_authorization(sexp)
+          elsif cmd.sf_type == 'before_filter'
+            common_beforefilter_parser(cmd.name, sexp[2], @filename, nil)
+          elsif cmd.sf_type == 'skip_before_filter'
+            common_skipbeforefilter_parser(cmd.name, sexp[2], @filename, nil)
+          elsif cmd.sf_type == 'config_authentication'
+            $authentication_module.config(sexp, @filename)
+          elsif cmd.sf_type == 'massassignment_filter'
+            $attr_accessible = sexp[2] # sarg
+          elsif cmd.sf_type == 'policy_definition'
+            # $log.error "TODO #{cmd.sf_type}"
+            $authorization_module.policy_definition(sexp)
+          else
+            $log.debug "TODO #{cmd.sf_type}"
+          end
+        end
+      end
+
+      # 20130721 robust parser
+      # TODO: => def CommonBeforeFilter?  Abstraction::Command
+      #
+      # $list_filter[name] = [only|except, [list of methods]]   =>  complete_filter()
+      # CommonBeforeFilterParser
+      # TODO: rails-command => $framework.common_beforefilter_parser
+      def common_beforefilter_parser(filter_name, sexp, filename, option)
+        filter = []
+        type   = nil
+        list   = []
+        todo   = false
+
+        if sexp == []
+          $log.info "common_beforebilter_parser() - '#{filter_name}' has null sexp #{filename}"
+          return
+        end
+
+        # 1 parse AST
+        if sexp[0].to_s == 'args_add_block'
+          bexp = sexp[1]  # list
+
+          bexp.each do |b|
+            if b[0].to_s == 'symbol_literal'
+              # filter
+              if b[1][0].to_s == 'symbol' && b[1][1][0].to_s == '@ident'
+                filter << b[1][1][1]
+              else
+                $log.error "common_beforebilter_parser() TODO"
+              end
+            elsif b[0].to_s == 'bare_assoc_hash'
+              hexp = b[1][0]
+              if hexp[0].to_s == 'assoc_new'
+
+                # type = only|except
+                if hexp[1][0].to_s == 'symbol_literal' && hexp[1][1][0].to_s == 'symbol' && hexp[1][1][1][0].to_s == '@ident'
+                  type = hexp[1][1][1][1]
+                elsif hexp[1][0] == :@label
+                  # only:
+                  type = hexp[1][1]
+                else
+                  $log.error "common_beforebilter_parser() TODO: be robust"
+                  pp hexp
+                end
+
+                # list
+                if hexp[2][0].to_s == 'symbol_literal' && hexp[2][1][0].to_s == 'symbol' && hexp[2][1][1][0].to_s == '@ident'
+                  # single
+                  list << hexp[2][1][1][1]
+                elsif hexp[2][0].to_s == 'array'
+                  # many
+                  aexp =  hexp[2][1]
+                  aexp.each do |a|
+                    if a[0].to_s == 'symbol_literal' && a[1][0].to_s == 'symbol' && a[1][1][0].to_s == '@ident'
+                      list << a[1][1][1]
+                    else
+                      $log.error "common_beforebilter_parser() TODO"
+                      pp a[0]
+                      pp a[1][0]
+                      pp a[1][1][0]
+                    end
+                  end  # each
+                else
+                  $log.error "common_beforebilter_parser() TODO: be robust"
+                end
+              else
+                $log.error "common_beforebilter_parser() TODO"
+                todo = true
+              end
+            else
+              $log.error "common_beforebilter_parser() TODO"
+            end  # b[0]
+          end # bexp list
+        else
+          $log.error "common_beforebilter_parser() TODO: #{filter_name}"
+          p sexp[0]
+          pp sexp
+        end
+
+        # 2 POST process
+        if filter.size > 0
+          # Update command/filter ref count
+          filter.each do |f|
+            c = $abst_commands[f]
+            if c.nil?
+              $log.error "TODO: command '#{f}' is missing"
+            else
+              c.count += 1
+            end
+          end
+
+          # TODO: = true
+          if todo
+            $log.error "common_beforebilter_parser() filter = #{filter} type=#{type}  methods=#{list}"
+            ruby_code = get_ruby(sexp)
+            p ruby_code
+            pp sexp
+          end
+
+          # add to global list
+          # the list must be cleared at the start of the controller class
+          # TODO: AppCon => $list_global_filter
+          if $class_name == 'applicationcontroller'
+            # scope: Global
+            filter.each do |f|
+              if $list_global_filter[f].nil?
+                if type.nil?
+                  # no selection
+                  $list_global_filter[f] = ['all', nil]
+                else
+                  $list_global_filter[f] = [type, list]
+                end
+              else
+                $log.error "TODO: #{f} exist "
+              end
+            end
+          else
+            # scope: Class
+            filter.each do |f|
+              if type.nil?
+                # no selection
+                $list_filter[f] = ['all', nil]
+              else
+                $list_filter[f] = [type, list]
+              end
+            end
+          end
+        else
+          ruby_code = get_ruby(sexp)
+          $log.error "common_beforebilter_parser() unknown filter #{ruby_code} <<< PEP?"
+          pp sexp
+          fail "DEBUG"
+        end
+
+        if $class_name == 'applicationcontroller'
+          # $log.error "common_beforebilter_parser() GLOBAL #{filter_name} #{$list_global_filter}  #{$class_name}"
+        else
+          $log.debug "common_beforebilter_parser() #{filter_name} #{$list_filter}  #{$class_name}"
+        end
+      end  # def common_beforebilter_parser
+
+      def common_skipbeforefilter_parser(filter_name, sexp, filename, option)
+        arg = get_ruby(sexp[2])
+        $log.error "common_skipbeforefilter_parser() TODO:  #{arg} class=#{$class_name}"
+
+        if $list_global_filter.size == 0
+          # new
+          $list_global_filter[filter_name] = ['except', $class_name]
+        else
+          # already
+          $log.error "common_skipbeforefilter_parser(#{filter_name}) TODO:  #{arg} class=#{$class_name}"
+          pp $list_global_filter
+          fail "ADD CODE"
+        end
       end
 
       # get form_for target state path
@@ -1407,6 +1560,15 @@ module Abstraction
           if s1.nil?
             $log.info "add_dataflow_by_command() - no symbol, cmd=#{cmd.name} src=#{src_state.id}"
             $log.info "SKIP"
+            $log.error "DATAFLOW #{src_state.id} #{sarg}" # TODO
+            # View XSS out
+            if cmd.is_sf
+              if cmd.sf_type == 'anti_xss'
+                # raw_out
+                $log.error "DATAFLOW #{src_state.id} #{sarg} add_dataflow" # TODO
+                add_dataflow('out', 'raw_out', nil, nil, src_state.id, nil, filename)
+              end
+            end
             return
           end
 
@@ -1461,6 +1623,7 @@ module Abstraction
               df = add_dataflow('out', cmd.name, variable_id, variable_hint, src_state.id, nil, filename)  # save this to current DF list
               $dataflows << df
             end
+            $log.error "DATAFLOW" # TODO
             return
           end
 
@@ -1540,7 +1703,7 @@ module Abstraction
             dst_id = "C_#{$state.model}#update" if $state.action == 'edit'
             $log.debug "add_trans_by_form_submit() #{dst_id}"
             t = add_transition('submit', $state.id, dst_id, nil, $guard, @filename)
-            t.variables = $submit_variables
+            t.variables = $submit_variables unless t.nil?
           else
             # form_for
             dst_id = "C_#{$form_target}#create"  # $form_target <= at form_for

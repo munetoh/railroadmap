@@ -332,7 +332,8 @@ class SecurityAssuranceModel
     @dataflows, @raw_out_count = get_dataflows
 
   end
-  attr_accessor :dataflows, :raw_out_count, :downsteram_policy_count
+  attr_accessor :dataflows, :raw_out_count, :downsteram_policy_count,
+                :unclear_command_count
 
   def covered_percent
     # TODO: calc
@@ -396,18 +397,25 @@ class SecurityAssuranceModel
     $errors.severity2_count + $errors.severity3_count
   end
 
-  # Brakeman
-  def brakeman_warnings
-    if $brakeman_warnings.nil?
-      $log.debug "No brakeman warnings => TODO"
-      return []
-    else
-      $log.debug "warnings #{$brakeman_warnings.length}"
-      return $brakeman_warnings
+  def commands
+    @unclear_command_count = 0 # TODO
+    @commands = $abst_commands
+    # count unclear
+    $abst_commands.each do |k, c|
+      if c.providedby == 'unknown'
+        if c.count > 0
+          @unclear_command_count += 1
+          c.unclear = true
+        else
+          c.unclear = false
+        end
+      else
+        c.unclear = false
+      end
     end
+    return @commands
   end
 
-  #
   # Design
   #   AC table + asset list
   def design
@@ -434,7 +442,7 @@ class SecurityAssuranceModel
         if t.type == 'link_to'
           type = "link_to(#{t.title})"
           tr_bgcolor    = '#70ff70'
-        elsif t.type == 'submit'
+        elsif t.type == 'submit' || t.type == 'post'
           type = "submit(#{t.title}, #{t.variables})"  # TODO: title is nil 2012/4/24, TODO: put variables too
           tr_bgcolor    = '#ff7070' # RED
         elsif t.type == 'redirect_to'
@@ -672,6 +680,10 @@ class SecurityAssuranceModel
     end
     $log.info "@downsteram_policy_count #{@downsteram_policy_count}"
     return dataflows, raw_out_count
+  end
+
+  def uat
+    uat = {}
   end
 
   # ==========================================================================

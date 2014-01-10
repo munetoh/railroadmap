@@ -39,11 +39,11 @@ module Abstraction
           return add_block(level, sexp, 'else')
         end
         # MOD
-        if (sexp[0].class == Symbol) && (sexp[0].to_s == 'if_mod')
+        if (sexp[0].class == Symbol) && (sexp[0] == :if_mod)
           return add_block(level, sexp, 'if_mod')
         end
 
-        if (sexp[0].class == Symbol) && (sexp[0].to_s == 'do_block')
+        if (sexp[0].class == Symbol) && (sexp[0] == :do_block)
           # add block_var
           if sexp[1].nil?
             # without block var
@@ -63,7 +63,7 @@ module Abstraction
         end
 
         # TODO: SUBMIT
-        if (sexp[0].class == Symbol) && (sexp[0].to_s == 'method_add_block')
+        if (sexp[0].class == Symbol) && (sexp[0] == :method_add_block)
           parse_sexp_common(level, sexp)
           return
         end
@@ -78,7 +78,7 @@ module Abstraction
           end
         end
 
-        if (sexp[0].class == Symbol) && (sexp[0].to_s == 'command_call')
+        if (sexp[0].class == Symbol) && (sexp[0] == :command_call)
           return add_command_call(level, sexp, 'view')
         end
         if (sexp[0].class == Symbol) && (sexp[0].to_s == 'call')

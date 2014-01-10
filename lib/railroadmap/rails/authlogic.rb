@@ -54,4 +54,11 @@ module Rails
   def print_stat
     $log.error "print_stat TODO:"
   end
+
+  # v023 uses JSON
+  # RSpec: spec/rails/requirements/json_spec.rb
+  # TODO: TBD
+  def append_sample_requirements(json)
+    $log.error "compleate_pep_assignment TODO:"
+  end
 end

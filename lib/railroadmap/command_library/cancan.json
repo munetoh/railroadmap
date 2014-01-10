@@ -1,0 +1,88 @@
+// cancan
+// 
+{
+  // Class level
+  "load_resource": {
+    "type":       "filter",
+    "subtype":    "authorization",
+    "is_sf":       true,
+    "sf_type":    "global_authorization",
+    "providedby": "cancan",
+    "status":     "todo"
+  },
+  "load_and_authorize_resource": {
+    "type":          "filter",
+    "subtype":       "authorization",
+    "is_sf":          true,
+    "sf_type":       "global_authorization",
+    "testcase_type": "sampling",
+    "providedby":    "cancan",
+    "status":        "todo"
+  },
+  "skip_authorize_resource": {
+    "type":          "filter",
+    "subtype":       "authorization",
+    "is_sf":         true,
+    "sf_type":       "anti_global_authorization",
+    "testcase_type": "none",
+    "providedby":    "cancan",
+    "status":        "todo"
+  },
+
+  // def level
+  "authorize!": {
+    "type":       "filter",
+    "subtype":    "authorization",
+    "is_sf":       true,
+    "sf_type":    "local_authorization",
+    "providedby": "cancan",
+    "status":     "todo"
+  },
+
+
+  // code level
+  // used at ability.rb
+  "can": {
+    "type":          "filter",
+    "subtype":       "authorization",
+    "is_sf":          true,
+    "sf_type":       "policy_definition",
+    "testcase_type": "none",
+    //"testcase_type": "sampling",
+    //"testcase_name": "conditional_authorization_can",
+    "providedby":    "cancan",
+    "status":        "todo"
+  },
+  "cannot": {
+    "type":          "filter",
+    "subtype":       "authorization",
+    "is_sf":          true,
+    "sf_type":       "policy_definition",
+    "testcase_type": "none",
+    //"testcase_type": "sampling",
+    //"testcase_name": "conditional_authorization_can",
+    "providedby":    "cancan",
+    "status":        "todo"
+  },
+  "can?": {
+    "type":          "filter",
+    "subtype":       "authorization",
+    "is_sf":         true,
+    "sf_type":       "conditional_authorization",
+    "testcase_type": "sampling",
+    "testcase_name": "conditional_authorization_canQ",
+    "providedby":    "cancan",
+    "status":        "todo"
+  },
+
+
+  "has_role?": {
+    "type":          "filter",
+    "subtype":       "authorization",
+    "is_sf":          true,
+    "sf_type":       "conditional_authorization",
+    "testcase_type": "sampling",
+    "providedby":    "cancan",
+    "status":        "todo"
+  }
+}

@@ -12,7 +12,13 @@ describe Abstraction::Parser::Controller do
   it ": init railroadmap" do
     init_railroadmap
     $apv = Abstraction::Parser::View.new
-    $apv.add_json_command_list('./lib/railroadmap/command_library/rails.json')
+    $abs = Abstraction::MVC.new
+    $abs.add_json_command_list('./lib/railroadmap/command_library/ruby.json')
+    $abs.add_json_command_list('./lib/railroadmap/command_library/rails.json')
+    $abs.add_json_command_list('./lib/railroadmap/command_library/devise.json')
+    # v023 commnets
+    # respond_to is still processed by lib/railroadmap/rails/rails-commands.rb
+    # respond_with is still processed by lib/railroadmap/rails/rails-commands.rb
   end
 
   it ": Load the controller files (app/controllers)" do
@@ -58,8 +64,8 @@ describe Abstraction::Parser::Controller do
     # v010 $abst_transitions.size.should eq 33
     $abst_transitions.size.should eq 40
 
-    # $protect_from_forgery.should eq true
-    $protect_from_forgery.should eq false
+    $protect_from_forgery.should eq true
+    # $protect_from_forgery.should eq false
     # $authentication_method.should eq 'devise'
   end
 end

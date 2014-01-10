@@ -6,16 +6,23 @@
 
 require 'spec_helper'
 
+require 'railroadmap/rails/devise.rb'
+
 describe Abstraction::Parser::Model do
   it ": init railroadmap" do
     init_railroadmap
     $apv = Abstraction::Parser::View.new
-    $apv.add_json_command_list('./lib/railroadmap/command_library/rails.json')
+    $abs = Abstraction::MVC.new
+    $abs.add_json_command_list('./lib/railroadmap/command_library/ruby.json')
+    $abs.add_json_command_list('./lib/railroadmap/command_library/rails.json')
+    $abs.add_json_command_list('./lib/railroadmap/command_library/devise.json')
   end
 
   it ": Load the model files (db,app/models)" do
     s1 = Abstraction::Parser::ModelSchema.new
     s1.load('./spec/rails/abstraction/sample/db/schema.rb')
+
+    $authentication_module = Rails::Devise.new
 
     m0 = Abstraction::Parser::Model.new
     m0.load('M_user', 'user', './spec/rails/abstraction/sample/app/models/user.rb')

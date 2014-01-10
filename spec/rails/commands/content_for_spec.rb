@@ -68,7 +68,9 @@ describe Abstraction::Parser::View do
   it ": init railroadmap" do
     init_railroadmap
     $apv = Abstraction::Parser::View.new
-    $apv.add_json_command_list('./lib/railroadmap/command_library/rails.json')
+    # $apv.add_json_command_list('./lib/railroadmap/command_library/rails.json')
+    $abs = Abstraction::MVC.new
+    $abs.add_json_command_list('./lib/railroadmap/command_library/rails.json')
   end
 
   it ": Parse content_for 1 (ERB)" do

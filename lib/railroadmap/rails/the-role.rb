@@ -29,6 +29,10 @@
 #     [[:symbol_literal, [:symbol, [:@ident, "apptyps", [9, 23]]]],
 #      [:symbol_literal, [:symbol, [:@ident, "index", [9, 33]]]]],
 #     false]]],
+#
+# 2013-12-18 SM command list => the_role.json
+
+require 'railroadmap/rails/pdp'
 
 #
 module Rails
@@ -95,81 +99,6 @@ module Rails
       $abst_commands[c1.name] = c1
     end
 
-    # 20130813 TODO: edit_admin_role_path is not a command, but a path
-    def get_command_list
-      the_role_commands = {
-        # app/models/concerns/the_role_base.rb:  def any_role? roles_hash = {}
-        'any_role?' => {
-          type:       'unknown_filter',
-          providedby: 'the_role'
-        },
-
-        # 20130815
-        # The_Role do alias "has?"" => "has_role?", so put has? dummy here , "any?" also
-        'has?' => {
-          type:       'unknown',
-          providedby: 'the_role'
-        },
-        'any?' => {
-          type:       'unknown',
-          providedby: 'the_role'
-        },
-
-        # {"filename"=>"the_role/app/controllers/the_role_controller.rb"}
-        'role_required' => {
-          type:       'filter',
-          is_sf:      true,
-          sf_type:    'authorization',
-          providedby: 'the_role'
-        },
-
-        # {"filename"=>"the_role/app/controllers/admin/role_sections_controller.rb"}
-        'section_rule_names' => {
-          type:       'unknown_filter',
-          providedby: 'the_role'
-        },
-
-        # {"filename"=>"the_role/app/controllers/admin/roles_controller.rb"}
-        'role_find' => {
-          type:       'unknown_filter',
-          providedby: 'the_role'
-        },
-
-        # {"filename"=>"the_role/app/controllers/the_role_controller.rb"}
-        'owner_required' => {
-          type:       'filter',
-          is_sf:      true,
-          sf_type:    'owner_authorization',
-          providedby: 'the_role'
-        },
-
-        # lib/the_role/config.rb:    config_accessor :layout, :default_user_role
-        'layout' => {
-          type:       'unknown_filter',
-          providedby: 'the_role'
-        },
-
-        # the_role/app/controllers/admin/role_sections_controller.rb
-        'redirect_to_edit' => {
-          type:            'transition',
-          subtype:         'redirect_to',
-          transition_path: 'edit_admin_role_path',
-          providedby:      'the_role' },
-
-        # app/controllers/the_role_controller.rb:  def role_access_denied
-        'role_access_denied' => {
-          type:       'unknown_filter',
-          providedby: 'the_role'
-        },
-
-        # IGNORE
-        'edit_admin_role_path' => {
-          type:       'path',
-          providedby: 'the_role'
-        },
-      }
-    end
-
     #--------------------------------------------------------------------------
     # Code
     # call
@@ -188,6 +117,9 @@ module Rails
 
     # lookup the policy list
     def is_listed?(role_list, role)
+      return false if role_list.nil?
+      return false if role.nil?
+
       role_list.each do |r|
         return true if r[:role] == role
       end
@@ -294,20 +226,32 @@ module Rails
       puts "    PDP file: #{filename}"
     end
 
-    def print_sample_requirements_base_policies
-      puts "  'role' => {         # The_Role"
-      puts "    model_alias: { # map the_role to appmodel"
-      puts "      'admin:role'         => 'role',"
-      puts "      'admin:role_section' => 'role' },"
-      puts "    is_authenticated: true,"
-      puts "    is_authorized:    true, # Admin only"
-      puts "    level: 15,  # Mandatory?"
-      puts "    color: 'red'"
-      puts "    roles:  ["
-      puts "      { role: 'admin',  action: 'CRUD' },"
-      puts "      { role: 'user',   action: 'R' } ]"
-      puts "  },"
-      return ['role']
+    # v023 uses JSON
+    # RSpec: spec/rails/requirements/json_spec.rb
+    def append_sample_requirements(json, model_list)
+      model_alias = {}
+      model_alias['admin:role'] = 'role'
+      model_alias['admin:role_section'] = 'role'
+
+      r0 = {}
+      r0['role'] = 'admin'
+      r0['action'] = 'CRUD'
+
+      r1 = {}
+      r1['role'] = 'user'
+      r1['action'] = 'R'
+
+      role = {}
+      role['model_alias'] = model_alias
+      role['is_authenticated'] = true
+      role['is_authorized'] = true
+      role['level'] = 15
+      role['color'] = 'red'
+      role['roles'] = [r0, r1]
+      role['commnets'] = 'The_Role role'
+      json['asset_base_policies']['role'] = role
+
+      model_list['role'] = true
     end
   end
 end

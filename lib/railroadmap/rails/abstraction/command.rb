@@ -42,8 +42,11 @@ module Abstraction
       @is_inbound   = false # dataflow with submit(post)
       @is_outbound  = false
 
-      @is_sf = false
+      @is_sf   = false
       @sf_type = nil
+
+      @testcase_type = nil
+      @testcase_name = nil
 
       @count      = 0
       @providedby = 'unknown'  # rails | devise | cancan | app
@@ -54,13 +57,23 @@ module Abstraction
 
       # user provided DST list => extracted by compleate_filter() and abstract_filter()
       @dst_table = nil
+
+      # used at
+      @location_list = []
     end
-    attr_accessor :name, :has_trans, :has_dataflow, :is_inbound, :is_outbound, :is_sf, :sf_type, :count, :type, :subtype, :providedby, :filenames, :unclear, :comment, :status, :dst_table, :transition_path
+    attr_accessor :name, :has_trans, :has_dataflow, :is_inbound, :is_outbound,
+                  :is_sf, :sf_type, :testcase_type, :testcase_name,
+                  :count, :type, :subtype, :providedby,
+                  :filenames, :unclear, :comment, :status, :dst_table,
+                  :transition_path, :location_list
 
     # callback
     def abstract(sexp, sarg, filename)
       @count += 1
       @filenames << filename
+
+      # update flags by GLOBAL security filter
+      $protect_from_forgery = true if @is_sf && @sf_type == 'csrf'
     end
 
     # callback

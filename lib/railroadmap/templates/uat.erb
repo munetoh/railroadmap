@@ -1,0 +1,59 @@
+
+
+
+<div class="dashboard_container" id="<%= title.gsub(/[^a-zA-Z]/, '') %>">
+  <h2>
+    <span class="group_name"><%= title %></span>
+    (<span class="covered_percent"><span class="<%= warning_css_class(failed_count) %>"><%= failed_count %></span></span>
+     failed test cases)
+  </h2>
+  <a name="<%= title.gsub(/[^a-zA-Z]/, '') %>"></a>
+
+
+  <hr/> <hr/> 
+  <h3>
+    User acceptance test
+    (<span class="<%= warning_css_class(failed_count) %>"><b><%= failed_count %></b> 
+    failed testcases </span>, <span class="<%= warning_css_class(unclear_count) %>"><b><%= unclear_count %></b> 
+    unclear test selections </span>)
+  </h3>
+  <div>
+  TODO
+  </div>
+
+  <table class="uat_list">
+    <thead>
+      <tr>
+        <th class="strong"> ID </th>
+        <th class="strong"> Name </th>
+        <th class="strong"> Type </th>
+        <th class="strong"> Subtype </th>
+        <th class="strong"> Status </th>
+        <th class="strong"> Test plan (type) </th>
+        <th class="strong"> Test case </th>
+        <th class="strong"> Test result </th>
+      </tr>
+    </thead>
+    <tbody>
+    <% $uat.each do |k, t| %>
+      <tr class="<%= unclear_css_class(t[:result] == 'failed') %>">
+        <td><%= t[:id] %></td>
+        <td><%= t[:name] %></td>
+        <td><%= t[:type] %></td>
+        <td><%= t[:subtype] %></td>
+        <td><%= t[:status] %></td>
+        <% if t[:testplan].nil? %>
+          <td></td>
+          <td></td>
+        <% else %>
+          <td><%= t[:testplan]['testcase_type'] %></td>
+          <td><a href="../<%= t[:testcase] %>" > <%= t[:testcase] %> </a></td>
+        <% end %>
+        <td><%= t[:result] %> </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+  <!-- 1) change td, 2) update transition_list public/application.js  -->
+
+</div>

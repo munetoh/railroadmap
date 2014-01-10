@@ -1,5 +1,8 @@
 # -*- coding: UTF-8 -*-
-# PDP: Policy Decision Point
+# PDP: Policy Decision Point    => CanCan:Ability.rb, TheRole: database
+# PEP: Policy Encorcement Point => command at Controllers
+
+require 'railroadmap/warning'
 
 module Rails
   # PDP class
@@ -286,8 +289,8 @@ module Rails
         # No
         @roles = {}
         if $roles.nil?
-          $log.error "TODO set roles"
-          fail "TODO"
+          $log.error "TODO set roles (ignore for genmodel)"
+          # fail "TODO"
         else
           set_roles_from_requirements
         end
